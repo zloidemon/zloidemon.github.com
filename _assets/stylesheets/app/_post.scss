@@ -1,0 +1,21 @@
+.post-info {
+  font-size:    0.707em;
+  font-style:   italic;
+  line-height:  1.125em;
+  list-style:   none;
+  margin:       1.414em 0px;
+  padding:      0px;
+}
+
+
+.post {
+  img {
+    @include single-box-shadow(rgba(black, 0.2), 0px, 0px, 1em);
+    @include border-radius(0.25em);
+
+    padding:          1em;
+    background-color: #fff;
+    border:           1px solid #ccc;
+    margin:           1em;
+  }
+}

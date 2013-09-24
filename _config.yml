@@ -1,0 +1,43 @@
+---
+markdown: redcarpet
+
+redcarpet:
+  extensions:
+    - no_intra_emphasis
+    - fenced_code_blocks
+    - autolink
+    - strikethrough
+    - superscript
+    - smart
+
+title: "VG's blog"
+
+assets:
+  sources:
+    - _assets/images
+    - _assets/javascripts
+    - _assets/stylesheets
+    - _assets/posts
+  css_compressor: sass
+  js_compressor:  uglifier
+  cache:          true
+
+zipballs:
+  sources: _downloads
+  dirname: downloads
+
+tags:
+  template: _layouts/archive
+
+categories:
+  template: _layouts/archive
+
+archives:
+  template: _layouts/archive
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - Rakefile
+
+permalink: /page/:title

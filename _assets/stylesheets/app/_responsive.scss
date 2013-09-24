@@ -1,0 +1,12 @@
+#header > h1 > a {
+  @include respond-to("mobile") {
+    display: inline-block;
+    height: 120px;
+    margin: 0px auto;
+    width: 300px;
+
+    span {
+      display: none;
+    }
+  }
+}
