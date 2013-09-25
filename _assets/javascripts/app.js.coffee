@@ -74,7 +74,7 @@ do ($ = jQuery, window) ->
 
     # Disqus
     if 0 < $("#disqus_thread").length
-      window.disqus_shortname = "vgvozdikov";
+      window.disqus_shortname = "zlonet";
       injectScript "http://#{window.disqus_shortname}.disqus.com/embed.js"
 
     # Light/Dark theme switcher
