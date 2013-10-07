@@ -14,15 +14,20 @@ Instruments to research:
 OSs:
 
 * FreeBSD 9.1-RELEASE-p7
-
 * Darwin 12.5.0
+* Linux 3.8.13-16.el6uek.x86_64 (Oracle Linux)
+
+Solaris based:
+
+* OpenIndiana 151a8 (so old compilers)
+* Oracle Linux 11.1 (so old compilers)
+* SmartOS latest (all stuff got coredump)
 
 DTrace Versions:
 
 * dtrace: Sun D 1.7 (FreeBSD)
-
 * dtrace: Sun D 1.6.2 (Darwin)
-
+* dtrace: Sun D 1.6.3 (Oracle Linux)
 
 Generation DTrace object twice
 -----
@@ -510,7 +515,74 @@ Empty results for another providers in module:
 
 It trouble related to position providers in ```file.d```.
 
-Not fixed in [FreeBSD], You have to use one name for all providers.
+Not fixed in [FreeBSD], You have to use one name for all providers:
+
+``` sh
+%> sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 tarantool75366     tarantool_box                       json_encode encode-done
+56572 tarantool75366     tarantool_box                       json_encode encode-start
+56573 tarantool75366     tarantool_box                     luaopen_cjson new-entry
+56574 tarantool75366     tarantool_box                         coro_init new-entry
+56575 tarantool75366     tarantool_box                            ev_run tick-start
+56576 tarantool75366     tarantool_box                            ev_run tick-stop
+56577 tarantool75367     tarantool_box                       json_encode encode-done
+56578 tarantool75367     tarantool_box                       json_encode encode-start
+56579 tarantool75367     tarantool_box                     luaopen_cjson new-entry
+56580 tarantool75367     tarantool_box                         coro_init new-entry
+56581 tarantool75367     tarantool_box                            ev_run tick-start
+56582 tarantool75367     tarantool_box                            ev_run tick-stop
+````
+
+Providers doesn't work if someone doesn't use
+-----
+
+If you defined a lot of provider in D file, but someone of providers doesn't use in code all providers doesn't work.
+
+For example you have:
+
+``` c
+provider lua_cjson {
+       probe start();
+       probe end(int, char *);
+};
+provider coro {
+       probe new__entry();
+};
+provider ev {
+       probe tick__start(int flags);
+       probe tick__stop(int flags);
+}
+```
+
+But provider ```lua_cjson``` and ```coro``` doesn't use in code but defined in D file. You'll have:
+
+``` sh
+%> sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+```
+
+If you change file as below:
+
+``` c
+provider ev {
+       probe tick__start(int flags);
+       probe tick__stop(int flags);
+};
+```
+
+Then run tarantool again you'll have:
+
+``` sh
+%> sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+56642    ev32305     tarantool_box                            ev_run tick-start
+56643    ev32305     tarantool_box                            ev_run tick-stop
+```
+
+This is bug on FreeBSD and Oracle Linux.
 
 
 Kernel panic by empty MODULE
@@ -677,17 +749,132 @@ CPU     ID                    FUNCTION:NAME
 Patched tarantool available in the repo [tarantool-dtrace].
 
 
-DTrace in OSX
+DTrace probes at runtime
 -----
 
-DTrace in OSX more convenient than FreeBSD/Solaris because It has modified toolchain. You need only use:
+This is very intersting task, I found [libusdt] with [lua-usdt] bindings and tried that in [tarantool-dtrace]. I had great result on OSX and FreeBSD but on Oracle Linux doesn't work.
+
+Exaple of usage:
+
+After run application you had only static providers which which below:
+
+```sh
+%> sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+ 1578   lua54178     tarantool_box                               foo iprobe
+ 4031    ev54179     tarantool_box                            ev_run tick-start
+ 4032    ev54179     tarantool_box                            ev_run tick-stop
+ 4132    ev54178     tarantool_box                            ev_run tick-start
+ 4133    ev54178     tarantool_box                            ev_run tick-stop
+```
+
+Then you connected and try to use a USDT providers at realtime:
+
+```sh
+%> ~/tmp/tt-dtrace/bin/tarantool
+localhost> usdt
+---
+- provider: 'function: 0x094ca2b0'
+...
+localhost> provider = usdt.provider("lua", "tarantool_box")
+---
+...
+localhost> iprobe = provider:probe("foo", "iprobe", "int")
+---
+...
+localhost> provider:enable()
+---
+...
+```
+
+If you run DTrace you'll see available probes at realtime:
+
+```sh
+%> sudo dtrace -n 'lua*:tarantool_box:foo:iprobe { printf("%d", arg0)}'
+dtrace: description 'lua*:tarantool_box:foo:iprobe ' matched 1 probe
+```
+
+Time to fire!
+
+```sh
+localhost> iprobe:fire(1)
+---
+...
+localhost> iprobe:fire(2)
+---
+...
+localhost> iprobe:fire(4)
+---
+...
+localhost> iprobe:fire(200)
+---
+...
+localhost>
+```
+
+You must see probes at realtime:
+
+```sh
+%> sudo dtrace -n 'lua*:tarantool_box:foo:iprobe { printf("%d", arg0)}'
+dtrace: description 'lua*:tarantool_box:foo:iprobe ' matched 1 probe
+CPU     ID                    FUNCTION:NAME
+  1   1578                       foo:iprobe 1
+  0   1578                       foo:iprobe 2
+  1   1578                       foo:iprobe 4
+  1   1578                       foo:iprobe 200
+```
+
+Unfortunately doesn't work on Oracle Linux. Also FreeBSD have a bug with USDT probes where probes more than 5 arguments.
+
+DTrace on FreeBSD
+-----
+
+DTrace have a lot bugs but works with any limits.
+
+Bug list:
+
+* Wildcards bug
+* USDT at runtime works only with probes with arguments less than 5
+* USDT depended by base src because need ```dtrace.h``` although It exists on OSX and Oracle Linux
+* Bug with providers position in D file with multi link dtrace objects
+* Bug with not used probes when all providers unavailable if doesn't use in code
+
+DTrace on Oracle Linux
+-----
+
+DTrace on [Oracle Linux] doesn't work fine. I found a few bugs similar as on FreeBSD.
+
+Bug list:
+
+* USDT doesn't work
+* Bug with providers position in D file with multi link dtrace objects
+* Bug with not used probes when all providers unavailable if doesn't use in code
+
+DTrace on OSX
+-----
+
+Bug list:
+
+* Not found
+
+
+Conclusions
+-----
+
+The best platform for DTrace is OSX now. 
+
+DTrace on OSX more convenient than FreeBSD/Solaris because It has modified toolchain. You need only use:
 
 ```dtrace -h -s file.d -o header.h```
 
 And then include ```header.h``` in C code and compile binary file. 
 
 
+
 [FreeBSD]:   http://FreeBSD.org   "The main OS"
 [FIX]:       http://svnweb.freebsd.org/base/head/sys/cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c?r1=254198&r2=254197&pathrev=254198 "Fix panic"
 [tarantool]: http://tarantool.org "The Tarantool project"
-[tarantool-dtrace]: https://github.com/zloidemon/tarantool/tree/add-dtrace "DTrace in tarantool"
+[tarantool-dtrace]: https://github.com/tarantool/tarantool/tree/dtrace "DTrace in tarantool"
+[Oracle Linux]: http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html "Oracle Linux UEK3"
+[libusdt]: https://github.com/chrisa/libusdt "libusdt"
+[lua-usdt]: https://github.com/chrisa/lua-usdt "lua-usdt"
