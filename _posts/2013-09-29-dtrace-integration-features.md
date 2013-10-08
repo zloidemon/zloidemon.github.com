@@ -1,10 +1,10 @@
 ---
 layout:    post
 title:     DTrace integration features
-tags:      [ DTrace, FreeBSD, tarantool, OSX, kernel, C ]
+tags:      [ DTrace, tarantool, FreeBSD, Linux, Solaris, OSX, kernel, C, CMake ]
 ---
 
-This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I'll explain my troubles and approach to fixing bugs in tarantool, a no-sql DB, with common instruments.
+This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I'll explain my troubles and approach to fixing bugs in [tarantool], a no-sql DB, with common instruments.
 
 This post isn't yet complete. I'll add new information after fix/found bugs.
 
@@ -108,7 +108,7 @@ Contents of section .SUNW_dof:
  0290 00696e74 00636861 72202a00 696e7400  .int.char *.int.
  02a0 63686172 202a006a 736f6e5f 656e636f  char *.json_enco
  02b0 64650024 64747261 63653134 30393132  de.$dtrace140912
- 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_e.enc
+ 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_encode.enc
  02d0 6f64652d 73746172 7400696e 74006368  ode-start.int.ch
  02e0 6172202a 00696e74 00636861 72202a00  ar *.int.char *.
  02f0 6a736f6e 5f656e63 6f646500 24647472  json_encode.$dtr
@@ -582,7 +582,7 @@ Then run tarantool again you'll have:
 56643    ev32305     tarantool_box                            ev_run tick-stop
 ```
 
-This is bug on [FreeBSD] and Oracle [Linux].
+This is bug on [FreeBSD] and [Oracle Linux].
 
 
 Kernel panic by empty MODULE
@@ -694,7 +694,7 @@ Dumping 356 out of 3001 MB:..5%..14%..23%..32%..41%..54%..63%..72%..81%..95%
 #13 0x0000000801731a7c in ?? ()
 ```
 
-markj@ send me [FIX] panic. I am planing to try the patch.
+Mark Johnston send me [FIX] panic. I am planing to try the patch.
 
 CMake automation
 ----
@@ -907,18 +907,23 @@ Conclusions
 
 The best platform for DTrace is OSX now. 
 
-DTrace on OSX more convenient than FreeBSD/Solaris because it has a modified toolchain. You need only use:
+DTrace on OSX more convenient than FreeBSD/Linux/Solaris because it has a modified toolchain. You need only use:
 
 ```dtrace -h -s file.d -o header.h```
 
 And then include ```header.h``` in C code and compile binary file. 
 
+Thanks to
+-----
 
+* [Eitan Adler], He corrected mistakes in English.
+* Mark Johnston (markj@), He helped with various troubles in DTrace.
 
-[FreeBSD]:   http://FreeBSD.org   "The main OS"
-[FIX]:       http://svnweb.freebsd.org/base/head/sys/cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c?r1=254198&r2=254197&pathrev=254198 "Fix panic"
-[tarantool]: http://tarantool.org "The Tarantool project"
+[Eitan Adler]:      http://blog.eitanadler.com "Eitan Adler's blog"
+[FreeBSD]:          http://FreeBSD.org   "The main OS"
+[FIX]:              http://svnweb.freebsd.org/base/head/sys/cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c?r1=254198&r2=254197&pathrev=254198 "Fix panic"
+[tarantool]:        http://tarantool.org "The Tarantool project"
 [tarantool-dtrace]: https://github.com/tarantool/tarantool/tree/dtrace "DTrace in tarantool"
-[Oracle Linux]: http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html "Oracle Linux UEK3"
-[libusdt]: https://github.com/chrisa/libusdt "libusdt"
-[lua-usdt]: https://github.com/chrisa/lua-usdt "lua-usdt"
+[Oracle Linux]:     http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html "Oracle Linux UEK3"
+[libusdt]:          https://github.com/chrisa/libusdt "libusdt"
+[lua-usdt]:         https://github.com/chrisa/lua-usdt "lua-usdt"
