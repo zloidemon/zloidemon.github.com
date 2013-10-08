@@ -826,6 +826,50 @@ CPU     ID                    FUNCTION:NAME
 
 Unfortunately doesn't work on Oracle Linux. Also FreeBSD have a bug with USDT probes where probes more than 5 arguments.
 
+CMake automation
+----
+
+Integration with CMake or another build tools is painful because you need do ```dtrace -G``` for one or many objects.
+But that doesn't need do on OSX, this is best way and more convenient. See example with full hack: 
+
+``` cmake
+set(cjson_obj)
+ 
+add_library(cjson_objs OBJECT lua_cjson.c strbuf.c ${FPCONV_SOURCES})
+set_target_properties(cjson_objs PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set(cjson_obj ${cjson_obj} $<TARGET_OBJECTS:cjson_objs>)
+ 
+if(ENABLE_DTRACE AND DTRACE)
+    message(STATUS "DTrace found and enabled")
+    add_definitions(-DENABLE_DTRACE)
+    set(D_FILE ${PROJECT_SOURCE_DIR}/cjson_dtrace)
+    execute_process(
+       COMMAND ${DTRACE} -h -s ${D_FILE}.d -o ${D_FILE}.h
+    )
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "FreeBSD")
+        set(cjson_obj_2 ${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/cjson_objs.dir/lua_cjson.c.o)
+        set(dtrace_obj ${CMAKE_CURRENT_BINARY_DIR}/dtrace.o)
+        add_custom_command(OUTPUT ${dtrace_obj}
+            COMMAND ${DTRACE} -G -s ${D_FILE}.d -o ${dtrace_obj} ${cjson_obj_2}
+            DEPENDS ${cjson_obj_2}
+        )
+        set_source_files_properties(${dtrace_obj}
+            PROPERTIES
+            EXTERNAL_OBJECT true
+            GENERATED true
+        )
+        set(cjson_obj ${cjson_obj} ${dtrace_obj})
+        unset(cjson_obj_2)
+        unset(dtrace_obj)
+        unset(D_FILE)
+    endif()
+endif()
+ 
+add_library(cjson MODULE ${cjson_obj})
+set_target_properties(cjson PROPERTIES PREFIX "")
+target_link_libraries(cjson ${_MODULE_LINK})
+```
+
 DTrace on FreeBSD
 -----
 
