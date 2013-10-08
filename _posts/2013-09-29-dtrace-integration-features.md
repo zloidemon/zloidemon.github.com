@@ -4,9 +4,9 @@ title:     DTrace integration features
 tags:      [ DTrace, FreeBSD, tarantool, OSX, kernel, C ]
 ---
 
-This is a topic about troubles with integration DTrace in projects. I spent a few days for search bugs and fix its. I'll explain troubles and approach to fixing bugs in the no-sql [tarantool] DB with common instruments.
+This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I'll explain my troubles and approach to fixing bugs in tarantool, a no-sql DB, with common instruments.
 
-Topic isn't completed, I'll add new information after fix/found bugs.
+This post isn't yet complete. I'll add new information after fix/found bugs.
 
 Instruments to research:
 -----
@@ -29,7 +29,7 @@ DTrace Versions:
 * dtrace: Sun D 1.6.2 (Darwin)
 * dtrace: Sun D 1.6.3 (Oracle Linux)
 
-Generation DTrace object twice
+Generate DTrace object twice
 -----
 
 ``` sh
@@ -39,11 +39,11 @@ Password:
 dtrace: failed to match :tarantool_box::: No probe matches description
 ```
 
-If you have a modular application You'll try to generate many dtrace objects to link that with application. Basically you got static libraries and then linking. This is common approach to programming but If you use dtrace in more than one library you need run second time ```dtrace -G``` for getting one dtrace object which include all providers.
+If you have a modular application you'll try to generate many dtrace objects to link that with the application. You get static libraries and then link. This is a common approach to programming but if you use DTrace in more than one library you need run ```dtrace -G``` to get one dtrace object which include all providers.
 
-After first time you got a dtrace object with correct information but you would like to get object for all providers in different libs in one object. For example I'll explain main trouble with second time generation.
+After the first time you get a dtrace object with correct information but you would like to get object for all providers in different libs in one object. I'll explain the main issue with second generation with an example.
 
-This is example actually with one library. You are able to do that in command line for getting incorrect object because you did correct object before with information about one:
+This is an example with one library. You are able to do this on the command line for getting incorrect object because you did correct object before with information about one: ***
 
 ``` sh
 %> dtrace -G -s ../../include/dtrace.d ../CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o -o cjson_dtrace_second.o
@@ -54,9 +54,9 @@ MD5 (cjson_dtrace.o) = 69cc9d1037f106e682464af05205458c
 MD5 (cjson_dtrace_second.o) = a42c72ae540be068243936afe2d7b868
 ```
 
-On above list you see mismatch md5 sums. When I found that I started fire to drill-down to object files and look what's incorrect.
+On above list you see mismatched md5 sums. When I found that I started fire to drill-down to object files and look at what's incorrect.
 
-I got 2 dtrace objects, In ```strings``` command I found differences:
+I got 2 dtrace objects, Using the ```strings``` command I found the differences:
 
 ``` sh
 %> strings -a cjson_dtrace_second.o > dtrace_second
@@ -108,7 +108,7 @@ Contents of section .SUNW_dof:
  0290 00696e74 00636861 72202a00 696e7400  .int.char *.int.
  02a0 63686172 202a006a 736f6e5f 656e636f  char *.json_enco
  02b0 64650024 64747261 63653134 30393132  de.$dtrace140912
- 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_encode.enc
+ 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_e.enc
  02d0 6f64652d 73746172 7400696e 74006368  ode-start.int.ch
  02e0 6172202a 00696e74 00636861 72202a00  ar *.int.char *.
  02f0 6a736f6e 5f656e63 6f646500 24647472  json_encode.$dtr
@@ -151,7 +151,7 @@ Contents of section .SUNW_dof:
  0240 00000000 00000000 00000000 00000000  ................
 ```
 
-Next step is finding differences in library objects. After run ```dtrace -G``` to first and second time I got changes in main library objects.
+The next step is finding differences in library objects. After running ```dtrace -G``` twice I get these changes in main library objects:
 
 
 ``` sh
@@ -161,14 +161,14 @@ MD5 (lua_cjson.c.o) = bdc0afbb0869f7bee70c29a7ba538127
 MD5 (lua_cjson.c.o.dtrace) = 0d65212c87350dceb64f71429b72ce3b
 ```
 
-I used to do drill-down ```objdump``` but with ``.text``` section in object file because object file holds executable instructions in text section.
+I looked at the ```.text``` section of the object file in ```objdump``` because this section contains the executible code.
 
 ``` sh
 %> objdump -d -j .text lua_cjson.c.o.dtrace > dtrace
 %> objdump -d -j .text lua_cjson.c.o > non-dtrace
 ````
 
-I used a ```diff``` command to see changes in correct and not modified objects files of library:
+I used the ```diff``` command to confirm that the changes are correct:
 
 
 ``` sh
@@ -285,7 +285,7 @@ As seen above, DTrace modifies an object file with use together dtrace and libra
 Doesn't work multi-PROVIDER in MODULE 
 -----
 
-This is next main trouble with integration. It hadn't work anything providers in one module (application). I always got one working provider in application. The trouble related to many dtrace objects which I wanted use when I linked application. If you have a few dtrace objects I'll link its in binary but works only ```first``` provider (depended by position object file in linking proccess).
+This is the next main issue with integration. It doesn't work on anything providers in one module (application). I always got one working provider in application. The trouble related to many dtrace objects which I wanted use when I linked application. If you have a few dtrace objects I'll link its in binary but works only ```first``` provider (depended by position object file in linking proccess).*****
 
 ``` sh
 %> cat ../include/dtrace.d
@@ -308,7 +308,7 @@ provider cjson {
 };
 ```
 
-It doesn't work because it was second time to use objects for dtrace. See "Generation DTrace object twice" for more details.
+It doesn't work because we need to run DTrace twice. See "Generate DTrace object twice" for more details.
 
 ``` sh
 %> dtrace -G  -x nolibs -s ../include/dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o CMakeFiles/coro.dir/third_party/coro/coro.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o
@@ -320,7 +320,7 @@ MD5 (probes.o) = bc2c205b019c5e948cfba89ff098c7e8
 MD5 (dtrace.o) = bc2c205b019c5e948cfba89ff098c7e8
 ```
 
-I splitted dtrace file to several ```.d``` files and researched trouble. After that I got a few dtrace objects from correct object files.
+I split the dtrace file into several ```.d``` files. After that I got a few dtrace objects from correct object files.
 
 
 ``` sh
@@ -361,7 +361,7 @@ provider coro {
 };
 ```
 
-It worked when I linked by one dtrace object in the end of line:
+It worked when I linked one dtrace object at the end of line:
 
 ``` sh
 %> /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std=c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/cjson_dtrace.o
@@ -403,7 +403,7 @@ Providers works in module:
 56572  coro43387     tarantool_box                         coro_init new-entry
 ```
 
-It shows main trouble with linking all ```*.o``` dtrace objects. If want try that You'll get only one working provider because it linked with sorted objects and first is cjson by alphabet.
+This shows the main issue with linking all ```*.o``` dtrace objects. If want try that You'll get only one working provider because it is linked with  sorted objects and first is cjson alphabetically .
 
 ``` sh
 %> /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std=c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/*.o
@@ -444,19 +444,19 @@ It shows main trouble with linking all ```*.o``` dtrace objects. If want try tha
 56574    ev44269     tarantool_box                            ev_run tick-stop
 ```
 
-The trouble solved with use one common dtrace object for all libs. You need to run:
+The issue is solved with use one common dtrace object for all libs. You need to run:
 
 ```
 dtrace -G -s file.d *.o -o common.o
 ```
 
-And then link libs, objects and common.o to binary.
+And then link libs, objects and common.o to the binary.
 
 
-Doesn't work wildcards
+Wildcards don't work.
 -----
 
-I fixed first list of troubles, but I had strange result. Wildcards doesn't work for all providers. 
+I fixed first issue. Wildcards do not work for all providers. 
 
 Ready to use providers in module:
 
@@ -505,7 +505,7 @@ CPU     ID                    FUNCTION:NAME
 ^C
 ```
 
-Empty results for another providers in module:
+Empty results for another provider in the module:
 
 ``` sh
 %> sudo dtrace -n coro*:::
@@ -513,7 +513,7 @@ Empty results for another providers in module:
 ^C
 ```
 
-It trouble related to position providers in ```file.d```.
+The trouble relates to position providers in ```file.d```.
 
 Not fixed in [FreeBSD], You have to use one name for all providers:
 
@@ -534,10 +534,10 @@ Not fixed in [FreeBSD], You have to use one name for all providers:
 56582 tarantool75367     tarantool_box                            ev_run tick-stop
 ````
 
-Providers doesn't work if someone doesn't use
+All the providers must use the code
 -----
 
-If you defined a lot of provider in D file, but someone of providers doesn't use in code all providers doesn't work.
+If you defined a lot of providers in the D file, but some of providers doesn't use the code, then all providers doesn't work.
 
 For example you have:
 
@@ -555,7 +555,7 @@ provider ev {
 }
 ```
 
-But provider ```lua_cjson``` and ```coro``` doesn't use in code but defined in D file. You'll have:
+But providers ```lua_cjson``` and ```coro``` doesn't use in code but defined in D file. You'll have:
 
 ``` sh
 %> sudo dtrace -l -m tarantool_box
@@ -582,7 +582,7 @@ Then run tarantool again you'll have:
 56643    ev32305     tarantool_box                            ev_run tick-stop
 ```
 
-This is bug on FreeBSD and Oracle Linux.
+This is bug on [FreeBSD] and Oracle [Linux].
 
 
 Kernel panic by empty MODULE
@@ -607,7 +607,7 @@ If you run application You'll get access to providers:
   15     ev2016     tarantool_box                            ev_run tick-stop
 ```
 
-But If you run ```dtrace -m tarantool_box``` and then shutdown tarantool_box You'll get kernel panic:
+But If you run ```dtrace -m tarantool_box``` and then shutdown tarantool_box You'll get a kernel panic:
 
 
 ``` text
@@ -694,13 +694,13 @@ Dumping 356 out of 3001 MB:..5%..14%..23%..32%..41%..54%..63%..72%..81%..95%
 #13 0x0000000801731a7c in ?? ()
 ```
 
-markj@ send me [FIX] panic. I'm planing to try patch.
+markj@ send me [FIX] panic. I am planing to try the patch.
 
 CMake automation
 ----
 
 Integration with CMake or another build tools is painful because you need do ```dtrace -G``` for one or many objects.
-But that doesn't need to do on OSX, this is the best way and more convenient. See example with full hack linking to library/binary:
+But that is not needed on on OSX, this is the best way and more convenient. See example with full hack linking to library/binary:
 
 ``` cmake
 set(cjson_obj)
@@ -743,7 +743,7 @@ target_link_libraries(cjson ${_MODULE_LINK})
 DTrace in tarantool
 -----
 
-Pre release of DTrace in [tarantool]. If you run box.cjson.encode() function, You'll able to see data for encoding and len. 
+A pre-release of DTrace is available in [tarantool]. If you run box.cjson.encode() function, You'll able to see data for encoding and len. 
 
 Example commands in command line tarantool client: 
 
@@ -800,7 +800,7 @@ This is very intersting task, I found [libusdt] with [lua-usdt] bindings and tri
 
 Exaple of usage:
 
-After run application you had only static providers which which below:
+After you run the application you have only static providers:
 
 ```sh
 %> sudo dtrace -l -m tarantool_box
@@ -812,7 +812,7 @@ After run application you had only static providers which which below:
  4133    ev54178     tarantool_box                            ev_run tick-stop
 ```
 
-Then you connected and try to use a USDT providers at realtime:
+Then connect and try to use a USDT providers at realtime:
 
 ```sh
 %> ~/tmp/tt-dtrace/bin/tarantool
@@ -873,11 +873,11 @@ Unfortunately doesn't work on Oracle Linux. Also FreeBSD have a bug with USDT pr
 DTrace on FreeBSD
 -----
 
-DTrace have a lot bugs but works with any limits.
+DTrace has a lot of bugs but it works with some limits.
 
 Bug list:
 
-* Wildcards bug
+* Wildcard bug
 * USDT at runtime works only with probes with arguments less than 5
 * USDT depended by base src because need ```dtrace.h``` although It exists on OSX and Oracle Linux
 * Bug with providers position in D file with multi link dtrace objects
@@ -886,7 +886,7 @@ Bug list:
 DTrace on Oracle Linux
 -----
 
-DTrace on [Oracle Linux] doesn't work fine. I found a few bugs similar as on FreeBSD.
+DTrace on [Oracle Linux] doesn't work well. I found a few bugs similar as on FreeBSD.
 
 Bug list:
 
@@ -907,7 +907,7 @@ Conclusions
 
 The best platform for DTrace is OSX now. 
 
-DTrace on OSX more convenient than FreeBSD/Solaris because It has modified toolchain. You need only use:
+DTrace on OSX more convenient than FreeBSD/Solaris because it has a modified toolchain. You need only use:
 
 ```dtrace -h -s file.d -o header.h```
 
