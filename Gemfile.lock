@@ -37,7 +37,7 @@ GEM
     jekyll-assets (0.7.2)
       jekyll (~> 1.0)
       sprockets (~> 2.10)
-    liquid (2.5.2)
+    liquid (2.5.3)
     maruku (0.6.1)
       syntax (>= 1.0.0)
     multi_json (1.7.9)

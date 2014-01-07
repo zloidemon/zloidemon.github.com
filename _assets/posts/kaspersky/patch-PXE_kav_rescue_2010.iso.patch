@@ -1,0 +1,38 @@
+--- init.orig	2010-05-24 21:40:35.000000000 +0800
++++ init	2010-05-25 16:07:38.000000000 +0800
+@@ -399,7 +399,7 @@ fi
+ 
+ # Determine root device
+ good_msg 'Determining root device...'
+-while true
++while false
+ do
+ 	while [ "${got_good_root}" != '1' ]
+ 	do
+@@ -462,6 +462,8 @@ do
+ 		fi
+ 	done
+ 
++REAL_ROOT=/image.squashfs
++REAL_ROOT_TYPE=squashfs
+ 
+ 	if [ "${CDROOT}" = 1 -a "${got_good_root}" = '1' -a "${REAL_ROOT}" != "/dev/nfs" ]
+ 	then
+@@ -521,7 +523,6 @@ then
+ 	[ -z "${LOOP}" ] && find_loop
+ 	[ -z "${LOOPTYPE}" ] && find_looptype
+ 
+-	cache_cd_contents
+ 
+ 	# If encrypted, find key and mount, otherwise mount as usual
+ 	if [ -n "${CRYPT_ROOT}" ]
+@@ -557,7 +558,8 @@ then
+ 		elif [ "${LOOPTYPE}" = 'squashfs' ]
+ 		then
+ 			good_msg 'Mounting squashfs filesystem'
+-			mount -t squashfs -o loop,ro "${NEW_ROOT}/mnt/cdrom/${LOOPEXT}${LOOP}" "${NEW_ROOT}/mnt/livecd"
++			mount -t squashfs -o loop,ro /${LOOP} ${NEW_ROOT}/mnt/livecd
++			mount -t squashfs -o loop,rw /cdrom.squashfs ${NEW_ROOT}/mnt/cdrom
+ 			test_success 'Mount filesystem'
+ 			FS_LOCATION='mnt/livecd'
+ 		elif [ "${LOOPTYPE}" = 'gcloop' ]
