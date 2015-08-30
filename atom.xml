@@ -1,0 +1,1302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>VG's blog</title>
+  <id>http://zlonet.ru/</id>
+  <updated>2015-08-30T22:48:39+03:00</updated>
+
+  <author>
+    <name>Veniamin Gvozdikov</name>
+    <email>vg@FreeBSD.org</email>
+  </author>
+
+  
+  <entry>
+    <title>Quick introduction to Tarantool</title>
+    <link href="/page/quick-introduction-to-tarantool"/>
+    <id>/page/quick-introduction-to-tarantool</id>
+    <updated>2015-08-30T00:00:00+03:00</updated>
+    <summary type="html">&lt;p&gt;Let&amp;#39;s start to install &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt; on FreeBSD 10.X from ports tree.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;Let&amp;#39;s start to install &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt; on FreeBSD 10.X from ports tree.&lt;/p&gt;
+
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://asciinema.org/a/3ns6vx5sijzqk4jggvkbdgdgf.js&quot; id=&quot;asciicast-3ns6vx5sijzqk4jggvkbdgdgf&quot; async&gt;&lt;/script&gt;
+
+&lt;p&gt;Getting started&lt;/p&gt;
+
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://asciinema.org/a/25723.js&quot; id=&quot;asciicast-25723&quot; async&gt;&lt;/script&gt;
+
+&lt;p&gt;Access to console&lt;/p&gt;
+
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://asciinema.org/a/25724.js&quot; id=&quot;asciicast-25724&quot; async&gt;&lt;/script&gt;
+
+&lt;p&gt;Connection between tarantools&lt;/p&gt;
+
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://asciinema.org/a/25725.js&quot; id=&quot;asciicast-25725&quot; async&gt;&lt;/script&gt;
+
+&lt;p&gt;Change delimiter
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://asciinema.org/a/25727.js&quot; id=&quot;asciicast-25727&quot; async&gt;&lt;/script&gt;&lt;/p&gt;
+
+&lt;p&gt;Python3 asycnio driver&lt;/p&gt;
+
+&lt;script type=&quot;text/javascript&quot; src=&quot;https://asciinema.org/a/25733.js&quot; id=&quot;asciicast-25733&quot; async&gt;&lt;/script&gt;
+</content>
+  </entry>
+  
+  <entry>
+    <title>DTrace integration features</title>
+    <link href="/page/dtrace-integration-features"/>
+    <id>/page/dtrace-integration-features</id>
+    <updated>2013-09-29T00:00:00+04:00</updated>
+    <summary type="html">&lt;p&gt;This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I&amp;#39;ll explain my troubles and approach to fixing bugs in &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt;, a no-sql DB, with common instruments.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I&amp;#39;ll explain my troubles and approach to fixing bugs in &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt;, a no-sql DB, with common instruments.&lt;/p&gt;
+
+&lt;p&gt;This post isn&amp;#39;t yet complete. I&amp;#39;ll add new information after fix/found bugs.&lt;/p&gt;
+
+&lt;h2&gt;Instruments to research:&lt;/h2&gt;
+
+&lt;p&gt;OSs:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;FreeBSD 9.1-RELEASE-p7&lt;/li&gt;
+&lt;li&gt;Darwin 12.5.0&lt;/li&gt;
+&lt;li&gt;Linux 3.8.13-16.el6uek.x86_64 (Oracle Linux)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Solaris based:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;OpenIndiana 151a8 (so old compilers)&lt;/li&gt;
+&lt;li&gt;Oracle Linux 11.1 (so old compilers)&lt;/li&gt;
+&lt;li&gt;SmartOS latest (all stuff got coredump)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;DTrace Versions:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;dtrace: Sun D 1.7 (FreeBSD)&lt;/li&gt;
+&lt;li&gt;dtrace: Sun D 1.6.2 (Darwin)&lt;/li&gt;
+&lt;li&gt;dtrace: Sun D 1.6.3 (Oracle Linux)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Generate DTrace object twice&lt;/h2&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you have a modular application you&amp;#39;ll try to generate many dtrace objects to link that with the application. You get static libraries and then link. This is a common approach to programming but if you use DTrace in more than one library you need run &lt;code&gt;dtrace -G&lt;/code&gt; to get one dtrace object which include all providers.&lt;/p&gt;
+
+&lt;p&gt;After the first time you get a dtrace object with correct information but you would like to get object for all providers in different libs in one object. I&amp;#39;ll explain the main issue with second generation with an example.&lt;/p&gt;
+
+&lt;p&gt;This is an example with one library. You are able to do this on the command line for getting incorrect object because you did correct object before with information about one: ***&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; dtrace -G -s ../../include/dtrace.d ../CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o -o cjson_dtrace_second.o
+
+%&amp;gt; md5 cjson_dtrace.o
+MD5 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;cjson_dtrace.o&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 69cc9d1037f106e682464af05205458c
+%&amp;gt; md5 cjson_dtrace_second.o
+MD5 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;cjson_dtrace_second.o&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; a42c72ae540be068243936afe2d7b868
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;On above list you see mismatched md5 sums. When I found that I started fire to drill-down to object files and look at what&amp;#39;s incorrect.&lt;/p&gt;
+
+&lt;p&gt;I got 2 dtrace objects, Using the &lt;code&gt;strings&lt;/code&gt; command I found the differences:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; strings -a cjson_dtrace_second.o &amp;gt; dtrace_second
+%&amp;gt; strings -a cjson_dtrace.o &amp;gt; dtrace
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; diff -up dtrace dtrace_second
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I saw removed functions with dtrace defines for a trace.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;diff language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span class=&quot;gd&quot;&gt;--- dtrace  2013-09-27 13:47:17.839671510 +0000&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ dtrace_second   2013-09-27 13:47:08.717669720 +0000&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -117,15 +117,10 @@ vfprintf&lt;/span&gt;
+ encode-done
+ char *
+ char *
+&lt;span class=&quot;gd&quot;&gt;-json_encode&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-$dtrace140912.json_encode&lt;/span&gt;
+ encode-start
+ char *
+ char *
+&lt;span class=&quot;gd&quot;&gt;-json_encode&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-$dtrace140912.json_encode&lt;/span&gt;
+ new-entry
+&lt;span class=&quot;gd&quot;&gt;-luaopen_cjson&lt;/span&gt;
+ tick-start
+ tick-stop
+ tarantool
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In the next stage I looked inside &lt;code&gt;.SUNW_dof&lt;/code&gt; in section of dtrace object file.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; objdump -s -j .SUNW_dof cjson_dtrace.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This is correct hex output from dtrace object:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text language-text&quot; data-lang=&quot;text&quot;&gt;cjson_dtrace.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0270 00000000 00000000 00000000 05000000  ................
+ 0280 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 0290 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 02a0 63686172 202a006a 736f6e5f 656e636f  char *.json_enco
+ 02b0 64650024 64747261 63653134 30393132  de.$dtrace140912
+ 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_encode.enc
+ 02d0 6f64652d 73746172 7400696e 74006368  ode-start.int.ch
+ 02e0 6172202a 00696e74 00636861 72202a00  ar *.int.char *.
+ 02f0 6a736f6e 5f656e63 6f646500 24647472  json_encode.$dtr
+ 0300 61636531 34303931 322e6a73 6f6e5f65  ace140912.json_e
+ 0310 6e636f64 65006e65 772d656e 74727900  ncode.new-entry.
+ 0320 6c75616f 70656e5f 636a736f 6e007469  luaopen_cjson.ti
+ 0330 636b2d73 74617274 00696e74 00696e74  ck-start.int.int
+ 0340 00746963 6b2d7374 6f700069 6e740069  .tick-stop.int.i
+ 0350 6e740074 6172616e 746f6f6c 00000000  nt.tarantool....
+ 0360 53756e20 4420312e 37004672 65654253  Sun D 1.7.FreeBS
+ 0370 44000000 00000000 00000000 00000000  D...............
+ 0380 00000000 00000000 00000000 00000000  ................
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Drill-down to next &lt;code&gt;incorrect&lt;/code&gt; object:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; objdump -s -j .SUNW_dof cjson_dtrace_second.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In &lt;code&gt;.SUNW_dof&lt;/code&gt; sect I saw empty dtrace providers for tracing function:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text language-text&quot; data-lang=&quot;text&quot;&gt;cjson_dtrace_second.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0190 00000000 00000000 00000000 05000000  ................
+ 01a0 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 01b0 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 01c0 63686172 202a0065 6e636f64 652d7374  char *.encode-st
+ 01d0 61727400 696e7400 63686172 202a0069  art.int.char *.i
+ 01e0 6e740063 68617220 2a006e65 772d656e  nt.char *.new-en
+ 01f0 74727900 7469636b 2d737461 72740069  try.tick-start.i
+ 0200 6e740069 6e740074 69636b2d 73746f70  nt.int.tick-stop
+ 0210 00696e74 00696e74 00746172 616e746f  .int.int.taranto
+ 0220 6f6c0000 00000000 53756e20 4420312e  ol......Sun D 1.
+ 0230 37004672 65654253 44000000 00000000  7.FreeBSD.......
+ 0240 00000000 00000000 00000000 00000000  ................
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The next step is finding differences in library objects. After running &lt;code&gt;dtrace -G&lt;/code&gt; twice I get these changes in main library objects:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; md5 lua_cjson.c.o
+MD5 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;lua_cjson.c.o&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; bdc0afbb0869f7bee70c29a7ba538127
+%&amp;gt; md5 lua_cjson.c.o.dtrace
+MD5 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;lua_cjson.c.o.dtrace&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; 0d65212c87350dceb64f71429b72ce3b
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I looked at the &lt;code&gt;.text&lt;/code&gt; section of the object file in &lt;code&gt;objdump&lt;/code&gt; because this section contains the executible code.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; objdump -d -j .text lua_cjson.c.o.dtrace &amp;gt; dtrace
+%&amp;gt; objdump -d -j .text lua_cjson.c.o &amp;gt; non-dtrace
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I used the &lt;code&gt;diff&lt;/code&gt; command to confirm that the changes are correct:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; diff -up non-dtrace dtrace
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;diff language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span class=&quot;gd&quot;&gt;--- non-dtrace  2013-09-27 13:42:05.811669039 +0000&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ dtrace  2013-09-27 13:41:59.149669338 +0000&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -1,5 +1,5 @@&lt;/span&gt;
+
+&lt;span class=&quot;gd&quot;&gt;-lua_cjson.c.o:     file format elf64-x86-64-freebsd&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+lua_cjson.c.o.dtrace:     file format elf64-x86-64-freebsd&lt;/span&gt;
+
+ Disassembly of section .text:
+
+&lt;span class=&quot;gu&quot;&gt;@@ -11,7 +11,11 @@ Disassembly of section .text:&lt;/span&gt;
+        c:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+       10:  e8 1b 00 00 00          callq  30 &amp;lt;lua_cjson_new&amp;gt;
+       15:  89 45 f4                mov    %eax,-0xc(%rbp)
+&lt;span class=&quot;gd&quot;&gt;-      18:  e8 00 00 00 00          callq  1d &amp;lt;luaopen_cjson+0x1d&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      18:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      19:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      1a:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      1b:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+      1c:  90                      nop&lt;/span&gt;
+       1d:  b8 01 00 00 00          mov    $0x1,%eax
+       22:  48 83 c4 10             add    $0x10,%rsp
+       26:  5d                      pop    %rbp
+&lt;span class=&quot;gu&quot;&gt;@@ -217,7 +221,7 @@ Disassembly of section .text:&lt;/span&gt;
+      34b:  c3                      retq
+      34c:  0f 1f 40 00             nopl   0x0(%rax)
+
+&lt;span class=&quot;gd&quot;&gt;-0000000000000350 &amp;lt;json_encode&amp;gt;:&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+0000000000000350 &amp;lt;$dtrace140912.json_encode&amp;gt;:&lt;/span&gt;
+      350:  55                      push   %rbp
+      351:  48 89 e5                mov    %rsp,%rbp
+      354:  48 83 ec 50             sub    $0x50,%rsp
+&lt;span class=&quot;gu&quot;&gt;@@ -227,18 +231,22 @@ Disassembly of section .text:&lt;/span&gt;
+      365:  48 89 45 f0             mov    %rax,-0x10(%rbp)
+      369:  8b 7d bc                mov    -0x44(%rbp),%edi
+      36c:  48 8b 75 c0             mov    -0x40(%rbp),%rsi
+&lt;span class=&quot;gd&quot;&gt;-     370:  e8 00 00 00 00          callq  375 &amp;lt;json_encode+0x25&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     370:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     371:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     372:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     373:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     374:  90                      nop&lt;/span&gt;
+      375:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+&lt;span class=&quot;gd&quot;&gt;-     379:  e8 00 00 00 00          callq  37e &amp;lt;json_encode+0x2e&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     379:  e8 00 00 00 00          callq  37e &amp;lt;$dtrace140912.json_encode+0x2e&amp;gt;&lt;/span&gt;
+      37e:  b1 01                   mov    $0x1,%cl
+      380:  3d 01 00 00 00          cmp    $0x1,%eax
+      385:  88 4d bb                mov    %cl,-0x45(%rbp)
+&lt;span class=&quot;gd&quot;&gt;-     388:  0f 84 21 00 00 00       je     3af &amp;lt;json_encode+0x5f&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     388:  0f 84 21 00 00 00       je     3af &amp;lt;$dtrace140912.json_encode+0x5f&amp;gt;&lt;/span&gt;
+      38e:  be 01 00 00 00          mov    $0x1,%esi
+      393:  48 8d 14 25 00 00 00    lea    0x0,%rdx
+      39a:  00
+      39b:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+&lt;span class=&quot;gd&quot;&gt;-     39f:  e8 00 00 00 00          callq  3a4 &amp;lt;json_encode+0x54&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     39f:  e8 00 00 00 00          callq  3a4 &amp;lt;$dtrace140912.json_encode+0x54&amp;gt;&lt;/span&gt;
+      3a4:  3d 00 00 00 00          cmp    $0x0,%eax
+      3a9:  0f 95 c1                setne  %cl
+      3ac:  88 4d bb                mov    %cl,-0x45(%rbp)
+&lt;span class=&quot;gu&quot;&gt;@@ -247,13 +255,13 @@ Disassembly of section .text:&lt;/span&gt;
+      3b6:  81 b9 38 05 00 00 00    cmpl   $0x0,0x538(%rcx)
+      3bd:  00 00 00
+      3c0:  88 45 ba                mov    %al,-0x46(%rbp)
+&lt;span class=&quot;gd&quot;&gt;-     3c3:  0f 85 1b 00 00 00       jne    3e4 &amp;lt;json_encode+0x94&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     3c3:  0f 85 1b 00 00 00       jne    3e4 &amp;lt;$dtrace140912.json_encode+0x94&amp;gt;&lt;/span&gt;
+      3c9:  be 00 00 00 00          mov    $0x0,%esi
+      3ce:  48 8d 45 d0             lea    -0x30(%rbp),%rax
+      3d2:  48 89 45 c8             mov    %rax,-0x38(%rbp)
+      3d6:  48 8b 7d c8             mov    -0x38(%rbp),%rdi
+&lt;span class=&quot;gd&quot;&gt;-     3da:  e8 00 00 00 00          callq  3df &amp;lt;json_encode+0x8f&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-     3df:  e9 17 00 00 00          jmpq   3fb &amp;lt;json_encode+0xab&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     3da:  e8 00 00 00 00          callq  3df &amp;lt;$dtrace140912.json_encode+0x8f&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     3df:  e9 17 00 00 00          jmpq   3fb &amp;lt;$dtrace140912.json_encode+0xab&amp;gt;&lt;/span&gt;
+      3e4:  48 8b 45 f0             mov    -0x10(%rbp),%rax
+      3e8:  48 05 00 05 00 00       add    $0x500,%rax
+      3ee:  48 89 45 c8             mov    %rax,-0x38(%rbp)
+&lt;span class=&quot;gu&quot;&gt;@@ -271,16 +279,20 @@ Disassembly of section .text:&lt;/span&gt;
+      422:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+      426:  48 8b 75 c0             mov    -0x40(%rbp),%rsi
+      42a:  48 63 55 bc             movslq -0x44(%rbp),%rdx
+&lt;span class=&quot;gd&quot;&gt;-     42e:  e8 00 00 00 00          callq  433 &amp;lt;json_encode+0xe3&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     42e:  e8 00 00 00 00          callq  433 &amp;lt;$dtrace140912.json_encode+0xe3&amp;gt;&lt;/span&gt;
+      433:  48 8b 45 f0             mov    -0x10(%rbp),%rax
+      437:  81 b8 38 05 00 00 00    cmpl   $0x0,0x538(%rax)
+      43e:  00 00 00
+&lt;span class=&quot;gd&quot;&gt;-     441:  0f 85 09 00 00 00       jne    450 &amp;lt;json_encode+0x100&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     441:  0f 85 09 00 00 00       jne    450 &amp;lt;$dtrace140912.json_encode+0x100&amp;gt;&lt;/span&gt;
+      447:  48 8b 7d c8             mov    -0x38(%rbp),%rdi
+&lt;span class=&quot;gd&quot;&gt;-     44b:  e8 00 00 00 00          callq  450 &amp;lt;json_encode+0x100&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     44b:  e8 00 00 00 00          callq  450 &amp;lt;$dtrace140912.json_encode+0x100&amp;gt;&lt;/span&gt;
+      450:  8b 7d bc                mov    -0x44(%rbp),%edi
+      453:  48 8b 75 c0             mov    -0x40(%rbp),%rsi
+&lt;span class=&quot;gd&quot;&gt;-     457:  e8 00 00 00 00          callq  45c &amp;lt;json_encode+0x10c&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     457:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     458:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     459:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     45a:  90                      nop&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+     45b:  90                      nop&lt;/span&gt;
+      45c:  b8 01 00 00 00          mov    $0x1,%eax
+      461:  48 83 c4 50             add    $0x50,%rsp
+      465:  5d                      pop    %rbp
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;As seen above, DTrace modifies an object file with use together dtrace and library objects.&lt;/p&gt;
+
+&lt;h2&gt;Doesn&amp;#39;t work multi-PROVIDER in MODULE &lt;/h2&gt;
+
+&lt;p&gt;This is the next main issue with integration. It doesn&amp;#39;t work on anything providers in one module (application). I always got one working provider in application. The trouble related to many dtrace objects which I wanted use when I linked application. If you have a few dtrace objects I&amp;#39;ll link its in binary but works only &lt;code&gt;first&lt;/code&gt; provider (depended by position object file in linking proccess).*****&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; cat ../include/dtrace.d
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Main providers from dtrace file:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;coro&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ev&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tick__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tick__stop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cjson&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;encode__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;encode__done&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It doesn&amp;#39;t work because we need to run DTrace twice. See &amp;ldquo;Generate DTrace object twice&amp;rdquo; for more details.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; dtrace -G  -x nolibs -s ../include/dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o CMakeFiles/coro.dir/third_party/coro/coro.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o
+
+%&amp;gt; dtrace -G  -s ../include/dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o CMakeFiles/coro.dir/third_party/coro/coro.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o -o probes.o
+
+%&amp;gt; md5 probes.o dtrace.o
+MD5 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;probes.o&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; bc2c205b019c5e948cfba89ff098c7e8
+MD5 &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;dtrace.o&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; bc2c205b019c5e948cfba89ff098c7e8
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I split the dtrace file into several &lt;code&gt;.d&lt;/code&gt; files. After that I got a few dtrace objects from correct object files.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; dtrace -G  -s ../include/dtrace.d  CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o -o dtrace/cjson_dtrace.o
+
+%&amp;gt; cat ../third_party/lua-cjson/cjson_dtrace.d
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cjson&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;encode__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;encode__done&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; dtrace -G  -s ../third_party/libev/ev_dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o -o dtrace/ev_dtrace.o
+
+%&amp;gt; cat ../third_party/libev/ev_dtrace.d
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ev&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tick__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tick__stop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; dtrace -G  -s ../third_party/coro/coro_dtrace.d  CMakeFiles/coro.dir/third_party/coro/coro.c.o -o dtrace/coro_dtrace.o
+%&amp;gt; cat ../third_party/coro/coro_dtrace.d
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;coro&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;It worked when I linked one dtrace object at the end of line:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/cjson_dtrace.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Providers works in module:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 cjson43089     tarantool_box                       json_encode encode-done
+56572 cjson43089     tarantool_box                       json_encode encode-start
+56573 cjson43089     tarantool_box                     luaopen_cjson new-entry
+56574 cjson43090     tarantool_box                       json_encode encode-done
+56575 cjson43090     tarantool_box                       json_encode encode-start
+56576 cjson43090     tarantool_box                     luaopen_cjson new-entry
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/ev_dtrace.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571    ev42775     tarantool_box                            ev_run tick-start
+56572    ev42775     tarantool_box                            ev_run tick-stop
+56573    ev42776     tarantool_box                            ev_run tick-start
+56574    ev42776     tarantool_box                            ev_run tick-stop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/core_dtrace.o
+
+&lt;span class=&quot;sb&quot;&gt;```&lt;/span&gt; sh
+%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571  coro43386     tarantool_box                         coro_init new-entry
+56572  coro43387     tarantool_box                         coro_init new-entry
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This shows the main issue with linking all &lt;code&gt;*.o&lt;/code&gt; dtrace objects. If want try that You&amp;#39;ll get only one working provider because it is linked with  sorted objects and first is cjson alphabetically .&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/*.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 cjson43681     tarantool_box                       json_encode encode-done
+56572 cjson43681     tarantool_box                       json_encode encode-start
+56573 cjson43681     tarantool_box                     luaopen_cjson new-entry
+56574 cjson43682     tarantool_box                       json_encode encode-done
+56575 cjson43682     tarantool_box                       json_encode encode-start
+56576 cjson43682     tarantool_box                     luaopen_cjson new-entry
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/coro_dtrace.o ../../dtrace/ev_dtrace.o ../../dtrace/cjson_dtrace.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571  coro43978     tarantool_box                         coro_init new-entry
+56572  coro43979     tarantool_box                         coro_init new-entry
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/ev_dtrace.o ../../dtrace/coro_dtrace.o ../../dtrace/cjson_dtrace.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571    ev44268     tarantool_box                            ev_run tick-start
+56572    ev44268     tarantool_box                            ev_run tick-stop
+56573    ev44269     tarantool_box                            ev_run tick-start
+56574    ev44269     tarantool_box                            ev_run tick-stop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The issue is solved with use one common dtrace object for all libs. You need to run:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text language-text&quot; data-lang=&quot;text&quot;&gt;dtrace -G -s file.d *.o -o common.o
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And then link libs, objects and common.o to the binary.&lt;/p&gt;
+
+&lt;h2&gt;Wildcards don&amp;#39;t work.&lt;/h2&gt;
+
+&lt;p&gt;I fixed first issue. Wildcards do not work for all providers. &lt;/p&gt;
+
+&lt;p&gt;Ready to use providers in module:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+ 2789  coro23800     tarantool_box                         coro_init new-entry
+ 2790    ev23800     tarantool_box                            ev_run tick-start
+ 2791    ev23800     tarantool_box                            ev_run tick-stop
+ 2792 cjson23800     tarantool_box                       json_encode encode-done
+ 2793 cjson23800     tarantool_box                       json_encode encode-start
+ 2893  coro23798     tarantool_box                         coro_init new-entry
+ 2894    ev23798     tarantool_box                            ev_run tick-start
+ 2895    ev23798     tarantool_box                            ev_run tick-stop
+ 2896 cjson23798     tarantool_box                       json_encode encode-done
+ 2897 cjson23798     tarantool_box                       json_encode encode-start
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If I had file.d which contained: &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;cjson&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;encode__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;encode__done&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;coro&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ev&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tick__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tick__stop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I would got only one working &lt;code&gt;cjson*:&lt;/code&gt;:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -n &lt;span class=&quot;s1&quot;&gt;&amp;#39;cjson*::json_encode:encode-done&amp;#39;&lt;/span&gt;
+dtrace: description &lt;span class=&quot;s1&quot;&gt;&amp;#39;cjson*::json_encode:encode-done&amp;#39;&lt;/span&gt; matched 2 probes
+CPU     ID                    FUNCTION:NAME
+ 1      4          json_encode:encode-done
+ 0      4          json_encode:encode-done
+ 1      4          json_encode:encode-done
+ 1      4          json_encode:encode-done
+^C
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Empty results for another provider in the module:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -n coro*:::
+
+^C
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The trouble relates to position providers in &lt;code&gt;file.d&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Not fixed in &lt;a href=&quot;http://FreeBSD.org&quot; title=&quot;The main OS&quot;&gt;FreeBSD&lt;/a&gt;, You have to use one name for all providers:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 tarantool75366     tarantool_box                       json_encode encode-done
+56572 tarantool75366     tarantool_box                       json_encode encode-start
+56573 tarantool75366     tarantool_box                     luaopen_cjson new-entry
+56574 tarantool75366     tarantool_box                         coro_init new-entry
+56575 tarantool75366     tarantool_box                            ev_run tick-start
+56576 tarantool75366     tarantool_box                            ev_run tick-stop
+56577 tarantool75367     tarantool_box                       json_encode encode-done
+56578 tarantool75367     tarantool_box                       json_encode encode-start
+56579 tarantool75367     tarantool_box                     luaopen_cjson new-entry
+56580 tarantool75367     tarantool_box                         coro_init new-entry
+56581 tarantool75367     tarantool_box                            ev_run tick-start
+56582 tarantool75367     tarantool_box                            ev_run tick-stop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;All the providers must use the code&lt;/h2&gt;
+
+&lt;p&gt;If you defined a lot of providers in the D file, but some of providers doesn&amp;#39;t use the code, then all providers doesn&amp;#39;t work.&lt;/p&gt;
+
+&lt;p&gt;For example you have:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lua_cjson&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;end&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;coro&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;new__entry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ev&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tick__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tick__stop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;But providers &lt;code&gt;lua_cjson&lt;/code&gt; and &lt;code&gt;coro&lt;/code&gt; doesn&amp;#39;t use in code but defined in D file. You&amp;#39;ll have:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you change file as below:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;c language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;ev&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;tick__start&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+       &lt;span class=&quot;n&quot;&gt;probe&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;tick__stop&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;flags&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then run tarantool again you&amp;#39;ll have:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+56642    ev32305     tarantool_box                            ev_run tick-start
+56643    ev32305     tarantool_box                            ev_run tick-stop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This is bug on &lt;a href=&quot;http://FreeBSD.org&quot; title=&quot;The main OS&quot;&gt;FreeBSD&lt;/a&gt; and &lt;a href=&quot;http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html&quot; title=&quot;Oracle Linux UEK3&quot;&gt;Oracle Linux&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2&gt;Kernel panic by empty MODULE&lt;/h2&gt;
+
+&lt;p&gt;If you run application You&amp;#39;ll get access to providers:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+   4  cjson2015     tarantool_box                       json_encode encode-done
+   5  cjson2015     tarantool_box                       json_encode encode-start
+   6  cjson2015     tarantool_box                     luaopen_cjson new-entry
+   7   coro2015     tarantool_box                         coro_init new-entry
+   8     ev2015     tarantool_box                            ev_run tick-start
+   9     ev2015     tarantool_box                            ev_run tick-stop
+  10  cjson2016     tarantool_box                       json_encode encode-done
+  11  cjson2016     tarantool_box                       json_encode encode-start
+  12  cjson2016     tarantool_box                     luaopen_cjson new-entry
+  13   coro2016     tarantool_box                         coro_init new-entry
+  14     ev2016     tarantool_box                            ev_run tick-start
+  15     ev2016     tarantool_box                            ev_run tick-stop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;But If you run &lt;code&gt;dtrace -m tarantool_box&lt;/code&gt; and then shutdown tarantool_box You&amp;#39;ll get a kernel panic:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text language-text&quot; data-lang=&quot;text&quot;&gt;#&amp;gt;  kgdb kernel.debug /var/crash/vmcore.0
+GNU gdb 6.1.1 [FreeBSD]
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &amp;quot;show copying&amp;quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &amp;quot;show warranty&amp;quot; for details.
+This GDB was configured as &amp;quot;amd64-marcel-freebsd&amp;quot;...
+
+Unread portion of the kernel message buffer:
+kernel trap 12 with interrupts disabled
+
+
+Fatal trap 12: page fault while in kernel mode
+cpuid = 1; apic id = 01
+fault virtual address   = 0xfffffdffd8ecf3e2
+fault code      = supervisor read data, page not present
+instruction pointer = 0x20:0xffffffff81a4a7fd
+stack pointer           = 0x28:0xffffff80d53119d0
+frame pointer           = 0x28:0xffffff80d53119f0
+code segment        = base 0x0, limit 0xfffff, type 0x1b
+            = DPL 0, pres 1, long 1, def32 0, gran 1
+processor eflags    = resume, IOPL = 1
+current process     = 2023 (tarantool_box)
+trap number     = 12
+panic: page fault
+cpuid = 1
+KDB: stack backtrace:
+#0 0xffffffff809538a6 at kdb_backtrace+0x66
+#1 0xffffffff8091ac8e at panic+0x1ce
+#2 0xffffffff80c17990 at trap_fatal+0x290
+#3 0xffffffff80c17cfc at trap_pfault+0x21c
+#4 0xffffffff80c182f5 at trap+0x365
+#5 0xffffffff80c025f3 at calltrap+0x8
+#6 0xffffffff81cb15fd at fasttrap_fork+0x27d
+#7 0xffffffff808eaea9 at fork1+0x1519
+#8 0xffffffff808ebc12 at sys_fork+0x22
+#9 0xffffffff80c1713a at amd64_syscall+0x5ea
+#10 0xffffffff80c028d7 at Xfast_syscall+0xf7
+Uptime: 5m12s
+Dumping 356 out of 3001 MB:..5%..14%..23%..32%..41%..54%..63%..72%..81%..95%
+
+.... Loading modules skipped ....
+
+#0  doadump (textdump=Variable &amp;quot;textdump&amp;quot; is not available.
+) at pcpu.h:224
+224     __asm(&amp;quot;movq %%gs:0,%0&amp;quot; : &amp;quot;=r&amp;quot; (td));
+(kgdb) list *0xffffffff81a4a7fd
+0xffffffff81a4a7fd is in dtrace_assfail (/usr/src/sys/modules/dtrace/dtrace/../../../cddl/contrib/opensolaris/uts/common/dtrace/dtrace.c:603).
+598 }
+599
+600 int
+601 dtrace_assfail(const char *a, const char *f, int l)
+602 {
+603     dtrace_panic(&amp;quot;assertion failed: %s, file: %s, line: %d&amp;quot;, a, f, l);
+604
+605     /*
+606      * We just need something here that even the most clever compiler
+607      * cannot optimize away.
+(kgdb) backtrace
+#0  doadump (textdump=Variable &amp;quot;textdump&amp;quot; is not available.
+) at pcpu.h:224
+#1  0xffffffff8091a771 in kern_reboot (howto=260) at /usr/src/sys/kern/kern_shutdown.c:448
+#2  0xffffffff8091ac67 in panic (fmt=0x1 &amp;lt;Address 0x1 out of bounds&amp;gt;) at /usr/src/sys/kern/kern_shutdown.c:636
+#3  0xffffffff80c17990 in trap_fatal (frame=0xc, eva=Variable &amp;quot;eva&amp;quot; is not available.
+) at /usr/src/sys/amd64/amd64/trap.c:857
+#4  0xffffffff80c17cfc in trap_pfault (frame=0xffffff80d5311920, usermode=0) at /usr/src/sys/amd64/amd64/trap.c:773
+#5  0xffffffff80c182f5 in trap (frame=0xffffff80d5311920) at /usr/src/sys/amd64/amd64/trap.c:456
+#6  0xffffffff80c025f3 in calltrap () at /usr/src/sys/amd64/amd64/exception.S:228
+#7  0xffffffff81a4a7fd in dtrace_assfail (a=0xffffffff81cb4bc6 &amp;quot;cp-&amp;gt;p_dtrace_count == 0&amp;quot;, f=0xfffffe005721a81c &amp;quot;coro*&amp;quot;, l=Variable &amp;quot;l&amp;quot; is not available.
+)
+    at /usr/src/sys/modules/dtrace/dtrace/../../../cddl/contrib/opensolaris/uts/common/dtrace/dtrace.c:603
+#8  0xffffffff81cb15fd in fasttrap_fork (p=0xfffffe00a83b64a0, cp=0xfffffe005711d940)
+    at /usr/src/sys/modules/dtrace/fasttrap/../../../cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c:479
+#9  0xffffffff808eaea9 in fork1 (td=0xfffffe002b730470, flags=20, pages=Variable &amp;quot;pages&amp;quot; is not available.
+) at /usr/src/sys/kern/kern_fork.c:694
+#10 0xffffffff808ebc12 in sys_fork (td=0xfffffe002b730470, uap=Variable &amp;quot;uap&amp;quot; is not available.
+) at /usr/src/sys/kern/kern_fork.c:110
+#11 0xffffffff80c1713a in amd64_syscall (td=0xfffffe002b730470, traced=0) at subr_syscall.c:135
+#12 0xffffffff80c028d7 in Xfast_syscall () at /usr/src/sys/amd64/amd64/exception.S:387
+#13 0x0000000801731a7c in ?? ()
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Mark Johnston send me &lt;a href=&quot;http://svnweb.freebsd.org/base/head/sys/cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c?r1=254198&amp;amp;r2=254197&amp;amp;pathrev=254198&quot; title=&quot;Fix panic&quot;&gt;FIX&lt;/a&gt; panic. I am planing to try the patch.&lt;/p&gt;
+
+&lt;h2&gt;CMake automation&lt;/h2&gt;
+
+&lt;p&gt;Integration with CMake or another build tools is painful because you need do &lt;code&gt;dtrace -G&lt;/code&gt; for one or many objects.
+But that is not needed on on OSX, this is the best way and more convenient. See example with full hack linking to library/binary:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;cmake language-cmake&quot; data-lang=&quot;cmake&quot;&gt;&lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_obj&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;add_library&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_objs&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;OBJECT&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;lua_cjson.c&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;strbuf.c&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;FPCONV_SOURCES&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;set_target_properties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_objs&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;PROPERTIES&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;POSITION_INDEPENDENT_CODE&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;ON&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_obj&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cjson_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;$&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&amp;lt;TARGET_OBJECTS:cjson_objs&amp;gt;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;ENABLE_DTRACE&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;AND&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;DTRACE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;message&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;STATUS&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;DTrace found and enabled&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;add_definitions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;-DENABLE_DTRACE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;D_FILE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;PROJECT_SOURCE_DIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/cjson_dtrace&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;execute_process&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+       &lt;span class=&quot;s&quot;&gt;COMMAND&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;DTRACE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;-h&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;-s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;D_FILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;.d&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;-o&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;D_FILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;.h&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CMAKE_SYSTEM_NAME&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;STREQUAL&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;FreeBSD&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_obj_2&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CMAKE_CURRENT_BINARY_DIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/CMakeFiles/cjson_objs.dir/lua_cjson.c.o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;dtrace_obj&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;CMAKE_CURRENT_BINARY_DIR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/dtrace.o&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;add_custom_command&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;OUTPUT&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;dtrace_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;COMMAND&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;DTRACE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;-G&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;-s&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;D_FILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;.d&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;-o&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;dtrace_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cjson_obj_2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;DEPENDS&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cjson_obj_2&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;set_source_files_properties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;dtrace_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;PROPERTIES&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;EXTERNAL_OBJECT&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;true&lt;/span&gt;
+            &lt;span class=&quot;s&quot;&gt;GENERATED&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;true&lt;/span&gt;
+        &lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_obj&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cjson_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;dtrace_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;unset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson_obj_2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;unset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;dtrace_obj&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;unset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;D_FILE&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;endif&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;endif&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;nb&quot;&gt;add_library&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;MODULE&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;cjson_obj&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;set_target_properties&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;PROPERTIES&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;PREFIX&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;target_link_libraries&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;cjson&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;_MODULE_LINK&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h2&gt;DTrace in tarantool&lt;/h2&gt;
+
+&lt;p&gt;A pre-release of DTrace is available in &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt;. If you run box.cjson.encode() function, You&amp;#39;ll able to see data for encoding and len. &lt;/p&gt;
+
+&lt;p&gt;Example commands in command line tarantool client: &lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;text language-text&quot; data-lang=&quot;text&quot;&gt;127.0.0.2&amp;gt; lua box.cjson.encode({test= &amp;#39;xzvfvzcvzx&amp;#39;})
+---
+ - {&amp;quot;test&amp;quot;:&amp;quot;xzvfvzcvzx&amp;quot;}
+...
+127.0.0.2&amp;gt; lua box.cjson.encode({test= &amp;#39;xzvfvzcvzx&amp;#39;})
+---
+ - {&amp;quot;test&amp;quot;:&amp;quot;xzvfvzcvzx&amp;quot;}
+...
+127.0.0.2&amp;gt; lua box.cjson.encode({test= &amp;#39;xzvfvzcvzx&amp;#39;})
+---
+ - {&amp;quot;test&amp;quot;:&amp;quot;xzvfvzcvzx&amp;quot;}
+...
+127.0.0.2&amp;gt; lua box.cjson.encode({test= &amp;#39;xzvfvzsafzx&amp;#39;})
+---
+ - {&amp;quot;test&amp;quot;:&amp;quot;xzvfvzsafzx&amp;quot;}
+...
+127.0.0.2&amp;gt; lua box.cjson.encode({test= &amp;#39;xx&amp;#39;})
+---
+ - {&amp;quot;test&amp;quot;:&amp;quot;xx&amp;quot;}
+...
+127.0.0.2&amp;gt; lua box.cjson.encode({tmasfasdf= &amp;#39;xx&amp;#39;})
+---
+ - {&amp;quot;tmasfasdf&amp;quot;:&amp;quot;xx&amp;quot;}
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;DTrace in action:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -n &lt;span class=&quot;s1&quot;&gt;&amp;#39;tarantool*:json_encode:encode-start { self-&amp;gt;ts = timestamp; } tarantool*:json_encode:encode-done { printf(&amp;quot;%s time: %d&amp;quot;, copyinstr(arg1),&lt;/span&gt;
+&lt;span class=&quot;s1&quot;&gt; ((timestamp - self-&amp;gt;ts)/1000)); }&amp;#39;&lt;/span&gt;
+dtrace: description &lt;span class=&quot;s1&quot;&gt;&amp;#39;tarantool*:json_encode:encode-start &amp;#39;&lt;/span&gt; matched 4 probes
+CPU     ID                    FUNCTION:NAME
+  1  56611          json_encode:encode-done &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;test&amp;quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&amp;quot;xzvfvzcvzx&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;x&lt;span class=&quot;s2&quot;&gt;&amp;quot;} time: 10&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;  1  56611          json_encode:encode-done {&amp;quot;&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;:&amp;quot;&lt;/span&gt;xzvfvzcvzx&lt;span class=&quot;s2&quot;&gt;&amp;quot;}x&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: 10
+  1  56611          json_encode:encode-done &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;test&amp;quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&amp;quot;xzvfvzcvzx&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;x&lt;span class=&quot;s2&quot;&gt;&amp;quot;} time: 7&lt;/span&gt;
+&lt;span class=&quot;s2&quot;&gt;  1  56611          json_encode:encode-done {&amp;quot;&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;test&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;:&amp;quot;&lt;/span&gt;xzvfvzsafzx&lt;span class=&quot;s2&quot;&gt;&amp;quot;}&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: 10
+  1  56611          json_encode:encode-done &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;test&amp;quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&amp;quot;xx&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;vzsafzx&lt;span class=&quot;s2&quot;&gt;&amp;quot;}&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: 9
+  1  56611          json_encode:encode-done &lt;span class=&quot;o&quot;&gt;{&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;tmasfasdf&amp;quot;&lt;/span&gt;:&lt;span class=&quot;s2&quot;&gt;&amp;quot;xx&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;zx&lt;span class=&quot;s2&quot;&gt;&amp;quot;}&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;time&lt;/span&gt;: 9
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Patched tarantool available in the repo &lt;a href=&quot;https://github.com/tarantool/tarantool/tree/dtrace&quot; title=&quot;DTrace in tarantool&quot;&gt;tarantool-dtrace&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h2&gt;DTrace probes at runtime&lt;/h2&gt;
+
+&lt;p&gt;This is very intersting task, I found &lt;a href=&quot;https://github.com/chrisa/libusdt&quot; title=&quot;libusdt&quot;&gt;libusdt&lt;/a&gt; with &lt;a href=&quot;https://github.com/chrisa/lua-usdt&quot; title=&quot;lua-usdt&quot;&gt;lua-usdt&lt;/a&gt; bindings and tried that in &lt;a href=&quot;https://github.com/tarantool/tarantool/tree/dtrace&quot; title=&quot;DTrace in tarantool&quot;&gt;tarantool-dtrace&lt;/a&gt;. I had great result on OSX and FreeBSD but on Oracle Linux doesn&amp;#39;t work.&lt;/p&gt;
+
+&lt;p&gt;Exaple of usage:&lt;/p&gt;
+
+&lt;p&gt;After you run the application you have only static providers:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+ 1578   lua54178     tarantool_box                               foo iprobe
+ 4031    ev54179     tarantool_box                            ev_run tick-start
+ 4032    ev54179     tarantool_box                            ev_run tick-stop
+ 4132    ev54178     tarantool_box                            ev_run tick-start
+ 4133    ev54178     tarantool_box                            ev_run tick-stop
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then connect and try to use a USDT providers at realtime:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; ~/tmp/tt-dtrace/bin/tarantool
+localhost&amp;gt; usdt
+---
+- provider: &lt;span class=&quot;s1&quot;&gt;&amp;#39;function: 0x094ca2b0&amp;#39;&lt;/span&gt;
+...
+localhost&amp;gt; &lt;span class=&quot;nv&quot;&gt;provider&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; usdt.provider&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;lua&amp;quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&amp;quot;tarantool_box&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+---
+...
+localhost&amp;gt; &lt;span class=&quot;nv&quot;&gt;iprobe&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; provider:probe&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;&amp;quot;foo&amp;quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&amp;quot;iprobe&amp;quot;&lt;/span&gt;, &lt;span class=&quot;s2&quot;&gt;&amp;quot;int&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+---
+...
+localhost&amp;gt; provider:enable&lt;span class=&quot;o&quot;&gt;()&lt;/span&gt;
+---
+...
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;If you run DTrace you&amp;#39;ll see available probes at realtime:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -n &lt;span class=&quot;s1&quot;&gt;&amp;#39;lua*:tarantool_box:foo:iprobe { printf(&amp;quot;%d&amp;quot;, arg0)}&amp;#39;&lt;/span&gt;
+dtrace: description &lt;span class=&quot;s1&quot;&gt;&amp;#39;lua*:tarantool_box:foo:iprobe &amp;#39;&lt;/span&gt; matched 1 probe
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Time to fire!&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;localhost&amp;gt; iprobe:fire&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;1&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+---
+...
+localhost&amp;gt; iprobe:fire&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;2&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+---
+...
+localhost&amp;gt; iprobe:fire&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;4&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+---
+...
+localhost&amp;gt; iprobe:fire&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;200&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+---
+...
+localhost&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;You must see probes at realtime:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;sh language-sh&quot; data-lang=&quot;sh&quot;&gt;%&amp;gt; sudo dtrace -n &lt;span class=&quot;s1&quot;&gt;&amp;#39;lua*:tarantool_box:foo:iprobe { printf(&amp;quot;%d&amp;quot;, arg0)}&amp;#39;&lt;/span&gt;
+dtrace: description &lt;span class=&quot;s1&quot;&gt;&amp;#39;lua*:tarantool_box:foo:iprobe &amp;#39;&lt;/span&gt; matched 1 probe
+CPU     ID                    FUNCTION:NAME
+  1   1578                       foo:iprobe 1
+  0   1578                       foo:iprobe 2
+  1   1578                       foo:iprobe 4
+  1   1578                       foo:iprobe 200
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Unfortunately doesn&amp;#39;t work on Oracle Linux. Also FreeBSD have a bug with USDT probes where probes more than 5 arguments.&lt;/p&gt;
+
+&lt;h2&gt;DTrace on FreeBSD&lt;/h2&gt;
+
+&lt;p&gt;DTrace has a lot of bugs but it works with some limits.&lt;/p&gt;
+
+&lt;p&gt;Bug list:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Wildcard bug&lt;/li&gt;
+&lt;li&gt;USDT at runtime works only with probes with arguments less than 5&lt;/li&gt;
+&lt;li&gt;USDT depended by base src because need &lt;code&gt;dtrace.h&lt;/code&gt; although It exists on OSX and Oracle Linux&lt;/li&gt;
+&lt;li&gt;Bug with providers position in D file with multi link dtrace objects&lt;/li&gt;
+&lt;li&gt;Bug with not used probes when all providers unavailable if doesn&amp;#39;t use in code&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;DTrace on Oracle Linux&lt;/h2&gt;
+
+&lt;p&gt;DTrace on &lt;a href=&quot;http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html&quot; title=&quot;Oracle Linux UEK3&quot;&gt;Oracle Linux&lt;/a&gt; doesn&amp;#39;t work well. I found a few bugs similar as on FreeBSD.&lt;/p&gt;
+
+&lt;p&gt;Bug list:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;USDT doesn&amp;#39;t work&lt;/li&gt;
+&lt;li&gt;Bug with providers position in D file with multi link dtrace objects&lt;/li&gt;
+&lt;li&gt;Bug with not used probes when all providers unavailable if doesn&amp;#39;t use in code&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;DTrace on OSX&lt;/h2&gt;
+
+&lt;p&gt;Bug list:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Not found&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt;Conclusions&lt;/h2&gt;
+
+&lt;p&gt;The best platform for DTrace is OSX now. &lt;/p&gt;
+
+&lt;p&gt;DTrace on OSX more convenient than FreeBSD/Linux/Solaris because it has a modified toolchain. You need only use:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;dtrace -h -s file.d -o header.h&lt;/code&gt;&lt;/p&gt;
+
+&lt;p&gt;And then include &lt;code&gt;header.h&lt;/code&gt; in C code and compile binary file. &lt;/p&gt;
+
+&lt;h2&gt;Thanks to&lt;/h2&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;http://blog.eitanadler.com&quot; title=&quot;Eitan Adler&amp;#39;s blog&quot;&gt;Eitan Adler&lt;/a&gt;, He corrected mistakes in English.&lt;/li&gt;
+&lt;li&gt;Mark Johnston (markj@), He helped with various troubles in DTrace.&lt;/li&gt;
+&lt;/ul&gt;
+</content>
+  </entry>
+  
+  <entry>
+    <title>Nginx with Perl and OTRS</title>
+    <link href="/page/nginxperlotrs"/>
+    <id>/page/nginx-with-perl-and-otrs</id>
+    <updated>2011-02-18T00:00:00+03:00</updated>
+    <summary type="html">&lt;p&gt;Hi everybody!
+I like &lt;a href=&quot;http://www.nginx.org/&quot;&gt;nginx&lt;/a&gt;. It&amp;#39;s a fast web server! But I need using otrs, without apache and mod_perl. This is my configs for it:&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;Hi everybody!
+I like &lt;a href=&quot;http://www.nginx.org/&quot;&gt;nginx&lt;/a&gt;. It&amp;#39;s a fast web server! But I need using otrs, without apache and mod_perl. This is my configs for it:&lt;/p&gt;
+
+&lt;p&gt;You can install otrs from freebsd ports tree and then use my configs with perl wrapper :)&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$portmaster&lt;/span&gt; -d devel/otrs www/nginx www/p5-FastCGI
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;nginx.conf&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;nginx language-nginx&quot; data-lang=&quot;nginx&quot;&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;server_name&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;localhost&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;root&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/usr/local/otrs/var/httpd/htdocs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;access_log&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;/var/log/nginx/otrs.nginx_access.log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;index&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/otrs-web&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;gzip&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;alias&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/usr/local/otrs/var/httpd/htdocs&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;~&lt;/span&gt; &lt;span class=&quot;sr&quot;&gt;^/otrs/(.*\.pl)(/.*)?$&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;gzip&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;off&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#gzip makes scripts feel slower since they have to complete before getting gzipped&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;#    fastcgi_pass  unix:/.$1.sock;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_pass&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;unix:/var/run/perl-fcgi.sock&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;c1&quot;&gt;#    fastcgi_pass  127.0.0.1:8999;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_index&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.pl&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SCRIPT_FILENAME&lt;/span&gt;   &lt;span class=&quot;s&quot;&gt;/usr/local/otrs/bin/fcgi-bin/&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;QUERY_STRING&lt;/span&gt;      &lt;span class=&quot;nv&quot;&gt;$query_string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;REQUEST_METHOD&lt;/span&gt;    &lt;span class=&quot;nv&quot;&gt;$request_method&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;CONTENT_TYPE&lt;/span&gt;      &lt;span class=&quot;nv&quot;&gt;$content_type&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;CONTENT_LENGTH&lt;/span&gt;    &lt;span class=&quot;nv&quot;&gt;$content_length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;GATEWAY_INTERFACE&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;CGI/1.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SERVER_SOFTWARE&lt;/span&gt;   &lt;span class=&quot;s&quot;&gt;nginx&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SCRIPT_NAME&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$fastcgi_script_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;REQUEST_URI&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$request_uri&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;DOCUMENT_URI&lt;/span&gt;      &lt;span class=&quot;nv&quot;&gt;$document_uri&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;DOCUMENT_ROOT&lt;/span&gt;     &lt;span class=&quot;nv&quot;&gt;$document_root&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SERVER_PROTOCOL&lt;/span&gt;   &lt;span class=&quot;nv&quot;&gt;$server_protocol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;REMOTE_ADDR&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$remote_addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;REMOTE_PORT&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$remote_port&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SERVER_ADDR&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$server_addr&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SERVER_PORT&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$server_port&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SERVER_NAME&lt;/span&gt;       &lt;span class=&quot;nv&quot;&gt;$server_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;And you need a wrapper for use perl :) You can get it from:&lt;/p&gt;
+
+&lt;p&gt;copy &lt;a href=&quot;http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/fastcgi-wrapper&quot;&gt;fcgi-wrapper&lt;/a&gt;  to /usr/local/sbin
+copy &lt;a href=&quot;http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/perl-fcgi&quot;&gt;perl-fcgi&lt;/a&gt; to /usr/local/sbin&lt;/p&gt;
+
+&lt;p&gt;And rc.d script&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/perl-fcgi.rc&quot;&gt;perl-fcgi.rc&lt;/a&gt; to /usr/local/etc/rc.d/perl-fcgi&lt;/p&gt;
+
+&lt;p&gt;then add&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;perl_fcgi_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;YES&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt; &amp;gt;&amp;gt;/etc/rc.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Thanks &lt;a href=&quot;http://technotes.1000lines.net/nginx-perl-fastcgi-how-to/&quot;&gt;tech notes&lt;/a&gt;&lt;/p&gt;
+</content>
+  </entry>
+  
+  <entry>
+    <title>Installing a FusionInventory to FreeBSD</title>
+    <link href="/page/installing-a-fusioninventory-to-freebsd"/>
+    <id>/page/installing-a-fusioninventory-to-freebsd</id>
+    <updated>2011-02-18T00:00:00+03:00</updated>
+    <summary type="html">&lt;p&gt;Hi everybody!
+This is simple how to install fusioninventory to &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt;. I missed steps with install a DB.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;Hi everybody!
+This is simple how to install fusioninventory to &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt;. I missed steps with install a DB.&lt;/p&gt;
+
+&lt;p&gt;I have:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;% uname -sr
+FreeBSD 8.1-RELEASE
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I like ports tree :) We will install glpi and plugin from a ports tree &lt;sup&gt;^&lt;/sup&gt;&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$portmaster&lt;/span&gt; www/nginx www/glpi
+&lt;span class=&quot;nv&quot;&gt;$echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;nginx_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;YES&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;&amp;gt;&amp;gt;/etc/rc.conf
+&lt;span class=&quot;nv&quot;&gt;$echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;php_fpm_enable&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;YES&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;&amp;gt;&amp;gt;/etc/rc.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;You are can get a &lt;a href=&quot;http://www.freebsd.org/cgi/query-pr.cgi?pr=ports/154867&quot;&gt;port&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;And then try a few steps :-P&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$sh&lt;/span&gt; shar-1.sh
+&lt;span class=&quot;nv&quot;&gt;$make&lt;/span&gt; -C glpi-plugins-fusioninventory-server/ install clean
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This is my configuration file for a &lt;a href=&quot;http://www.nginx.org/&quot;&gt;nginx&lt;/a&gt; virtual host with glpi&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;nginx language-nginx&quot; data-lang=&quot;nginx&quot;&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt;       &lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;server_name&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;glpi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;#    charset utf-8;&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;#access_log  logs/host.access.log  main;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;access_log&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/var/log/nginx.glpi.log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;error_log&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/var/log/nginx.error.glpi.log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;root&lt;/span&gt;   &lt;span class=&quot;s&quot;&gt;/usr/local/www/glpi&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;index&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;index.php&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.html&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.htm&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;#error_page  404              /404.html;&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;# redirect server error pages to the static page /50x.html&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;#&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;error_page&lt;/span&gt;   &lt;span class=&quot;mi&quot;&gt;500&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;502&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;503&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;504&lt;/span&gt;  &lt;span class=&quot;s&quot;&gt;/50x.html&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/50x.html&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;root&lt;/span&gt;   &lt;span class=&quot;s&quot;&gt;/usr/local/www/nginx-dist&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;~&lt;/span&gt;&lt;span class=&quot;sr&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;\.php&lt;/span&gt;$ &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_pass&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;127.0.0.1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;9000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_index&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;index.php&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;fastcgi_param&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;SCRIPT_FILENAME&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/usr/local/www/glpi&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$fastcgi_script_name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;include&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;fastcgi_params&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Now need create a log files and then start services&amp;hellip;.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$touch&lt;/span&gt; /var/log/nginx.glpi.log
+&lt;span class=&quot;nv&quot;&gt;$touch&lt;/span&gt; /var/log/nginx.error.glpi.log
+&lt;span class=&quot;nv&quot;&gt;$/&lt;/span&gt;usr/local/etc/rc.d/php-fpm start
+&lt;span class=&quot;nv&quot;&gt;$/&lt;/span&gt;usr/local/etc/rc.d/nginx start
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Done. go to your glpi and activate plugin.&lt;/p&gt;
+</content>
+  </entry>
+  
+  <entry>
+    <title>Upload a file from shell to file sharing hosting</title>
+    <link href="/page/upload-a-file-from-shell-to-file-sharing-hosting"/>
+    <id>/page/upload-a-file-from-shell-to-file-sharing-hosting</id>
+    <updated>2011-01-29T00:00:00+03:00</updated>
+    <summary type="html">&lt;p&gt;I often sharing my files with use a file hosting. :) But I don&amp;#39;t like use a browser for it. Now I&amp;#39;ve wrote the function for my .zshrc.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;I often sharing my files with use a file hosting. :) But I don&amp;#39;t like use a browser for it. Now I&amp;#39;ve wrote the function for my .zshrc.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;k&quot;&gt;function &lt;/span&gt;zalil&lt;span class=&quot;o&quot;&gt;(){&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; -n &lt;span class=&quot;s2&quot;&gt;&amp;quot;$1&amp;quot;&lt;/span&gt; -a -f &lt;span class=&quot;s2&quot;&gt;&amp;quot;$1&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;;&lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;        if&lt;/span&gt;  &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;`du -k $1|awk &amp;#39;{print $1}&amp;#39;`&amp;quot;&lt;/span&gt;  -lt &lt;span class=&quot;s2&quot;&gt;&amp;quot;51200&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;;&lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;curl -s -i -F &lt;span class=&quot;s2&quot;&gt;&amp;quot;file&amp;quot;&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;@&lt;span class=&quot;s2&quot;&gt;&amp;quot;$1&amp;quot;&lt;/span&gt; -F &lt;span class=&quot;s2&quot;&gt;&amp;quot;submit=%20%20Send%20%20&amp;quot;&lt;/span&gt; &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+                http://zalil.ru/upload/|grep Location &lt;span class=&quot;se&quot;&gt;\&lt;/span&gt;
+                | sed &lt;span class=&quot;s2&quot;&gt;&amp;quot;s/Location: /http://zalil.ru/&amp;quot;&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;file &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; is large
+        &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;    else&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;        &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;file &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; is empty
+    &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content>
+  </entry>
+  
+  <entry>
+    <title>Pastebin in the ZSH</title>
+    <link href="/page/pastebin-in-the-zsh"/>
+    <id>/page/pastebin-in-the-zsh</id>
+    <updated>2011-01-24T00:00:00+03:00</updated>
+    <summary type="html">&lt;p&gt;I&amp;#39;ve wrote the pastebin function which I do use at the my .zshrc.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;I&amp;#39;ve wrote the pastebin function which I do use at the my .zshrc.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;k&quot;&gt;function &lt;/span&gt;pastebin&lt;span class=&quot;o&quot;&gt;(){&lt;/span&gt;
+    fload&lt;span class=&quot;o&quot;&gt;(){&lt;/span&gt;
+        &lt;span class=&quot;nv&quot;&gt;TFILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;cat &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;|sed &lt;span class=&quot;s1&quot;&gt;&amp;#39;s|%|%25|g;s|&amp;amp;|%26|g;s|+|%2b|g;s|;|%3b|g&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+        curl -d &lt;span class=&quot;s1&quot;&gt;&amp;#39;paste_code=&amp;#39;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;$TFILE&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;&amp;#39;&lt;/span&gt; &lt;span class=&quot;s1&quot;&gt;&amp;#39;http://pastebin.com/api_public.php&amp;#39;&lt;/span&gt;
+        &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;case&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; in
+    -h&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;Usage:&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;        pastebin filename for paste a file&amp;quot;&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&amp;quot;        pastebin for edit/paste on fly&amp;quot;&lt;/span&gt;;;
+    *&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; -n &lt;span class=&quot;s2&quot;&gt;&amp;quot;$1&amp;quot;&lt;/span&gt; -a -f &lt;span class=&quot;s2&quot;&gt;&amp;quot;$1&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;;&lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;        if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; -s &lt;span class=&quot;s2&quot;&gt;&amp;quot;$1&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;;&lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;fload &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;file &lt;span class=&quot;nv&quot;&gt;$1&lt;/span&gt; is empty
+        &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;    else&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;        &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;TEMPFILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;mktemp -q /tmp/pastebin.XXXXXX&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+        &lt;span class=&quot;nv&quot;&gt;$EDITOR&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$TEMPFILE&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; -s &lt;span class=&quot;s2&quot;&gt;&amp;quot;$TEMPFILE&amp;quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;fload &lt;span class=&quot;nv&quot;&gt;$TEMPFILE&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;rm &lt;span class=&quot;k&quot;&gt;${&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;TEMPFILE&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;}&lt;/span&gt;*
+    &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;;;
+
+&lt;span class=&quot;k&quot;&gt;esac&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content>
+  </entry>
+  
+  <entry>
+    <title>The JunOS installation script</title>
+    <link href="/page/the-junos-installation-script"/>
+    <id>/page/the-junos-installation-script</id>
+    <updated>2011-01-08T00:00:00+03:00</updated>
+    <summary type="html">&lt;p&gt;I don&amp;#39;t like installing manually&amp;hellip; So I&amp;#39;ve written a script for it. This is an autoamtic installation script for the JunOS olive for which you need to be using a version of &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; &amp;lt; 8.  &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; 8 is not supported.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;I don&amp;#39;t like installing manually&amp;hellip; So I&amp;#39;ve written a script for it. This is an autoamtic installation script for the JunOS olive for which you need to be using a version of &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; &amp;lt; 8.  &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; 8 is not supported.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;#!/bin/sh&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;FILE&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;jinstall-10.4R1.9-domestic-signed.tgz&amp;#39;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;HASH&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;649006003c9773859882411246405a39
+&lt;span class=&quot;nv&quot;&gt;UNTAR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;tar zxf&amp;#39;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;TAR&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;&amp;#39;tar zcf&amp;#39;&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;WORK&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;tmp
+
+work &lt;span class=&quot;o&quot;&gt;(){&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; -d &lt;span class=&quot;nv&quot;&gt;$WORK&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;        &lt;/span&gt;rm -fr &lt;span class=&quot;nv&quot;&gt;$WORK&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;    &lt;/span&gt;mkdir -p &lt;span class=&quot;nv&quot;&gt;$WORK&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$WORK&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+
+dwork &lt;span class=&quot;o&quot;&gt;(){&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; ../;rm -fr &lt;span class=&quot;nv&quot;&gt;$WORK&lt;/span&gt;
+&lt;span class=&quot;o&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;sysctl kern.osreldate|awk &lt;span class=&quot;s1&quot;&gt;&amp;#39;{print $2}&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt; -le 703000 &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;    if&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt; &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;md5 &lt;span class=&quot;nv&quot;&gt;$FILE&lt;/span&gt; | awk &lt;span class=&quot;s1&quot;&gt;&amp;#39;{print $4}&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$HASH&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;; &lt;span class=&quot;k&quot;&gt;then&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;            &lt;/span&gt;work
+            &lt;span class=&quot;nv&quot;&gt;$UNTAR&lt;/span&gt; ../&lt;span class=&quot;nv&quot;&gt;$FILE&lt;/span&gt;
+            work
+            &lt;span class=&quot;nv&quot;&gt;$UNTAR&lt;/span&gt; &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; ../&lt;span class=&quot;nv&quot;&gt;$FILE&lt;/span&gt;|sed -e &lt;span class=&quot;s1&quot;&gt;&amp;#39;s|-signed||g&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+            work
+            &lt;span class=&quot;nv&quot;&gt;$UNTAR&lt;/span&gt; ../pkgtools.tgz
+            cp -v /usr/bin/true bin/checkpic
+            &lt;span class=&quot;nv&quot;&gt;$TAR&lt;/span&gt; ../pkgtools.tgz *
+            dwork
+            &lt;span class=&quot;nv&quot;&gt;$TAR&lt;/span&gt; ../../&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$FILE&lt;/span&gt;|sed -e &lt;span class=&quot;s1&quot;&gt;&amp;#39;s|signed|olive|g&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt; *
+            dwork;dwor
+            pkg_add -f &lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;$FILE&lt;/span&gt;|sed -e &lt;span class=&quot;s1&quot;&gt;&amp;#39;s|signed|olive|g&amp;#39;&lt;/span&gt;&lt;span class=&quot;sb&quot;&gt;`&lt;/span&gt;
+            &lt;span class=&quot;nb&quot;&gt;echo &lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;vidconsole&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;&amp;gt;&amp;gt;/boot/loader.conf
+            reboot
+    &lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;        &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt;
+&lt;span class=&quot;nb&quot;&gt;    &lt;/span&gt;&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;else&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;    &lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;exit&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;fi&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content>
+  </entry>
+  
+  <entry>
+    <title>Установка junos 10 на PC</title>
+    <link href="/page/ustanovka-junos-10-na-pc"/>
+    <id>/page/install-junos-10-on-pc</id>
+    <updated>2010-07-03T00:00:00+04:00</updated>
+    <summary type="html">&lt;p&gt;Устанавливал JunOS я непосредственно в 7.3-RELEASE-i386-bootonly.iso.
+Первое на что нужно обратить внимание, так это на разделение slice на partition. Если не создавать partition /tmp, то возникает ошибка об нехватке свободного места на носителе md1, который в свою очередь имеет объём 160Mb.&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;Устанавливал JunOS я непосредственно в 7.3-RELEASE-i386-bootonly.iso.
+Первое на что нужно обратить внимание, так это на разделение slice на partition. Если не создавать partition /tmp, то возникает ошибка об нехватке свободного места на носителе md1, который в свою очередь имеет объём 160Mb.&lt;/p&gt;
+
+&lt;p&gt;Нужно установить минимальную версию FreeBSD на носитель, и приступить к созданию модифицированного пакета.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$cd&lt;/span&gt; /var/tmp
+Кладем package сюда удобным для вас способом.... И приступаем к модификации.
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; blah;cd blah;tar zxvf ../jinstall-10.1R1.8-domestic-signed.tgz
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; blah;cd blah;tar zxvf ../jinstall-10.1R1.8-domestic.tgz
+
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; blah;cd blah;tar zxvf ../pkgtools.tgz
+&lt;span class=&quot;nv&quot;&gt;$cp&lt;/span&gt; -v /usr/bin/true bin/checkpic
+
+&lt;span class=&quot;nv&quot;&gt;$tar&lt;/span&gt; zcvf ../pkgtools.tgz *
+&lt;span class=&quot;nv&quot;&gt;$cd&lt;/span&gt; ../;rm -rf blah
+&lt;span class=&quot;nv&quot;&gt;$tar&lt;/span&gt; zcfv /var/tmp/jinstall-10.1R1.8-domestic.tgz *
+Устанавливаем:
+&lt;span class=&quot;nv&quot;&gt;$pkg_add&lt;/span&gt; -f jinstall-10.1R1.8-domestic.tgz
+&lt;span class=&quot;nv&quot;&gt;$echo&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;vidconsole&lt;span class=&quot;se&quot;&gt;\&amp;quot;&lt;/span&gt;&amp;gt;&amp;gt;/boot/loader.conf;reboot
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Ожидаем окончания установки и радуемся:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;root@%cli
+root&amp;gt;show version
+Model: olive
+JUNOS Base OS boot &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Base OS Software Suite &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Kernel Software Suite &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Crypto Software Suite &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Packet Forwarding Engine Support &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;M/T Common&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Packet Forwarding Engine Support &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;M20/M40&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Online Documentation &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Voice Services Container package &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Border Gateway Function package &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Services AACL Container package &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Services LL-PDF Container package &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Services Stateful Firewall &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS AppId Services &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS IDP Services &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+JUNOS Routing Software Suite &lt;span class=&quot;o&quot;&gt;[&lt;/span&gt;10.1R1.8&lt;span class=&quot;o&quot;&gt;]&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;PS:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;В internet полно трактатов по установке olive на PC, но там старые версии, и для них не нужно создавать partition /tmp в slice.&lt;/li&gt;
+&lt;li&gt;HDD обязательно должен иметь имя ad0[s]X, либо нужно делать symlinks.&lt;/li&gt;
+&lt;li&gt;Минимальный объём оперативной памяти 512M, но потом можно вставить HDD после установки в другой системный блок. Я использую junos на 256M, но заметны проблемы при запуске cli и других команд.&lt;/li&gt;
+&lt;/ol&gt;
+</content>
+  </entry>
+  
+  <entry>
+    <title>Kaspersky update server</title>
+    <link href="/page/kaspersky-update-server"/>
+    <id>/page/kaspersky-update-server</id>
+    <updated>2010-05-27T00:00:00+04:00</updated>
+    <summary type="html">&lt;p&gt;Устанавливаем порт retranslator:&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;Устанавливаем порт retranslator:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$sudo&lt;/span&gt; make -C /usr/ports/security/retranslator install clean &lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;Пока только PR 147116&lt;span class=&quot;o&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;В файле &lt;strong&gt;/usr/local/etc/retranslator.conf&lt;/strong&gt; указываем пути для хранения баз, и продукты для которых нужно получать обновления. Дополнительную информацию можно получить тут.&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;ini language-ini&quot; data-lang=&quot;ini&quot;&gt;&lt;span class=&quot;k&quot;&gt;[path]&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;RetranslationPath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/path/to/kav.local/bases&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;TempPath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/tmp&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;[locale]&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;DateFormat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;%d-%m-%Y&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;TimeFormat&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;%H:%M:%S&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;[updater.path]&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;BackUpPath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/path/to/kav.local/backup&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;PidFile&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/var/run/kav-retranslator.pid&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;[updater.options]&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;RetranslateComponentsList&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;KDB, KDBI386, CORE, ARK, BSS, ADBU, ADB, AH, AH2I386, AH2X64, APU, AP, AS, BB, BB2, BLST, BLST2, KAV9EXEC, KAV8EXEC, INFO, RT, WMUF, WA, WAVI386, VLNS, EMU, PAS4, PAS, PARCTL, SSA, ASTRM, HIPS, HIPS2, KSN, QSCAN, UPDATER&lt;/span&gt;
+
+&lt;span class=&quot;na&quot;&gt;Index&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;u0607g.xml&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;IndexRelativeServerPath&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;index&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;UseUpdateServerUrl&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;no&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;UseUpdateServerUrlOnly&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;no&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;UpdateServerUrl&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;RegionSettings&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;ru&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ConnectTimeout&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;20&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;KeepSilent&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;no&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;UseProxy&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;no&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ProxyAddress&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;PassiveFtp&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;no&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;PostRetranslateCmd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;[updater.report]&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;Append&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;no&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ReportFileName&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/var/log/retranslator.log&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;ReportLevel&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;0&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Добавляем строку с заданием в cron для обновления каждые полчаса:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;1,31 * * * * root /usr/local/bin/retranslator -q -c /usr/local/etc/retranslator.conf
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Часть конфига для nginx:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;nginx language-nginx&quot; data-lang=&quot;nginx&quot;&gt;&lt;span class=&quot;k&quot;&gt;server&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;listen&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;80&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;kn&quot;&gt;servername&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;kav.local&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kn&quot;&gt;accesslog&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/var/log/webserver/kav.local_access.log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+    &lt;span class=&quot;kn&quot;&gt;location&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;root&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;/path/to/www/kav.local/bases&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+        &lt;span class=&quot;kn&quot;&gt;autoindex&lt;/span&gt; &lt;span class=&quot;no&quot;&gt;on&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content>
+  </entry>
+  
+  <entry>
+    <title>Kaspersky Rescue 10 PXE</title>
+    <link href="/page/kaspersky-rescue-10-pxe"/>
+    <id>/page/kaspersky-rescue-10-pxe</id>
+    <updated>2010-05-27T00:00:00+04:00</updated>
+    <summary type="html">&lt;p&gt;&lt;strong&gt;Depends on squashfs-tools &amp;gt; 3!&lt;/strong&gt;&lt;/p&gt;
+</summary>
+    <content type="html">&lt;p&gt;&lt;strong&gt;Depends on squashfs-tools &amp;gt; 3!&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;Patch patch-PXE-kav_rescue_10.iso.patch&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;diff language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span class=&quot;gd&quot;&gt;--- sbin/dmsquash-live-root.orig    2014-01-05 21:26:33.581580759 +0400&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ sbin/dmsquash-live-root 2014-01-06 21:42:30.159646123 +0400&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -46,9 +46,7 @@ fi&lt;/span&gt;
+
+ # determine filesystem type for a filesystem image
+ det_img_fs() {
+&lt;span class=&quot;gd&quot;&gt;-    local _img=&amp;quot;$1&amp;quot; _loop=$(losetup -f) _fs&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    losetup $_loop $_img; _fs=$(det_fs $_loop); losetup -d $_loop&lt;/span&gt;
+&lt;span class=&quot;gd&quot;&gt;-    echo $_fs&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    echo squashfs&lt;/span&gt;
+ }
+
+ for arg in $CMDLINE; do case $arg in ro|rw) liverw=$arg ;; esac; done
+&lt;span class=&quot;gu&quot;&gt;@@ -62,7 +60,6 @@ if [ -f $livedev ]; then&lt;/span&gt;
+         auto) die &amp;quot;cannot mount live image (unknown filesystem type)&amp;quot; ;;
+         *) FSIMG=$livedev ;;
+     esac
+&lt;span class=&quot;gd&quot;&gt;-else&lt;/span&gt;
+     mount -n -t $fstype -o ${liverw:-ro} $livedev /run/initramfs/live
+     if [ &amp;quot;$?&amp;quot; != &amp;quot;0&amp;quot; ]; then
+         die &amp;quot;Failed to mount block device of live image&amp;quot;
+&lt;span class=&quot;gd&quot;&gt;--- init.orig   2014-01-05 21:26:33.571246205 +0400&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ init    2014-01-06 19:55:26.324595021 +0400&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -288,7 +288,7 @@ unset main_loop&lt;/span&gt;
+ unset RDRETRY
+
+ if  ! ismounted &amp;quot;/run/initramfs/live&amp;quot;; then
+&lt;span class=&quot;gd&quot;&gt;-    CDROM_DEVICES=&amp;quot;/dev/sr*&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+    CDROM_DEVICES=&amp;quot;/image.squashfs&amp;quot;&lt;/span&gt;
+     for i in $CDROM_DEVICES
+     do
+         /sbin/dmsquash-live-root $i
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Build instructions:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;nv&quot;&gt;$mdconfig&lt;/span&gt; -f kav_rescue_10.iso
+&lt;span class=&quot;nv&quot;&gt;$mountcd_9660&lt;/span&gt; /dev/md0 /cdrom
+&lt;span class=&quot;nv&quot;&gt;$cp&lt;/span&gt; -v /cdrom/boot/rescue .
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; image &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;image
+&lt;span class=&quot;nv&quot;&gt;$lzcat&lt;/span&gt; -S lz /cdrom/boot/rescue.igz | cpio -id
+&lt;span class=&quot;nv&quot;&gt;$patch&lt;/span&gt; -p0&amp;lt;../../patch-PXE-kav_rescue_10.iso.patch
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; cdrom &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; cp -R /cdrom/rescue cdrom/
+&lt;span class=&quot;nv&quot;&gt;$mksquashfs&lt;/span&gt; cdrom image.squashfs &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; rm -fr cdrom
+&lt;span class=&quot;nv&quot;&gt;$find&lt;/span&gt; . -print | cpio -o -H newc | lzma -c &amp;gt; /usr/local/tftp/rescue.igz &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; ../ &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; rm -fr image/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Example config pxe:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;ini language-ini&quot; data-lang=&quot;ini&quot;&gt;&lt;span class=&quot;err&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;kav&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;kernel&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;/rescue&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;append initrd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/rescue.igz root=live rootfstype=auto vga=791 init=/init kav_lang=ru udev liveimg doscsi nomodeset&lt;/span&gt;
+
+&lt;span class=&quot;err&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;kav_text&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;kernel&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;/rescue&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;append initrd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;/rescue.igz root=live rootfstype=auto vga=791 init=/init kav_lang=ru udev liveimg nox kavshell noresume doscsi nomodeset&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Files: &lt;a href=&quot;http://storage.zlonet.ru/kav/20140106/rescue&quot;&gt;kernel&lt;/a&gt; and &lt;a href=&quot;http://storage.zlonet.ru/kav/20140106/rescue.igz&quot;&gt;initrd&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;em&gt;DEPRECATED&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;Patch patch-PXE_kav_rescue_2010.iso.patch&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;diff language-diff&quot; data-lang=&quot;diff&quot;&gt;&lt;span class=&quot;gd&quot;&gt;--- init.orig   2010-05-24 21:40:35.000000000 +0800&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+++ init    2010-05-25 16:07:38.000000000 +0800&lt;/span&gt;
+&lt;span class=&quot;gu&quot;&gt;@@ -399,7 +399,7 @@ fi&lt;/span&gt;
+
+ # Determine root device
+ good_msg &amp;#39;Determining root device...&amp;#39;
+&lt;span class=&quot;gd&quot;&gt;-while true&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+while false&lt;/span&gt;
+ do
+    while [ &amp;quot;${got_good_root}&amp;quot; != &amp;#39;1&amp;#39; ]
+    do
+&lt;span class=&quot;gu&quot;&gt;@@ -462,6 +462,8 @@ do&lt;/span&gt;
+        fi
+    done
+
+&lt;span class=&quot;gi&quot;&gt;+REAL_ROOT=/image.squashfs&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+REAL_ROOT_TYPE=squashfs&lt;/span&gt;
+
+    if [ &amp;quot;${CDROOT}&amp;quot; = 1 -a &amp;quot;${got_good_root}&amp;quot; = &amp;#39;1&amp;#39; -a &amp;quot;${REAL_ROOT}&amp;quot; != &amp;quot;/dev/nfs&amp;quot; ]
+    then
+&lt;span class=&quot;gu&quot;&gt;@@ -521,7 +523,6 @@ then&lt;/span&gt;
+    [ -z &amp;quot;${LOOP}&amp;quot; ] &amp;amp;&amp;amp; find_loop
+    [ -z &amp;quot;${LOOPTYPE}&amp;quot; ] &amp;amp;&amp;amp; find_looptype
+
+&lt;span class=&quot;gd&quot;&gt;-   cache_cd_contents&lt;/span&gt;
+
+    # If encrypted, find key and mount, otherwise mount as usual
+    if [ -n &amp;quot;${CRYPT_ROOT}&amp;quot; ]
+&lt;span class=&quot;gu&quot;&gt;@@ -557,7 +558,8 @@ then&lt;/span&gt;
+        elif [ &amp;quot;${LOOPTYPE}&amp;quot; = &amp;#39;squashfs&amp;#39; ]
+        then
+            good_msg &amp;#39;Mounting squashfs filesystem&amp;#39;
+&lt;span class=&quot;gd&quot;&gt;-           mount -t squashfs -o loop,ro &amp;quot;${NEW_ROOT}/mnt/cdrom/${LOOPEXT}${LOOP}&amp;quot; &amp;quot;${NEW_ROOT}/mnt/livecd&amp;quot;&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+           mount -t squashfs -o loop,ro /${LOOP} ${NEW_ROOT}/mnt/livecd&lt;/span&gt;
+&lt;span class=&quot;gi&quot;&gt;+           mount -t squashfs -o loop,rw /cdrom.squashfs ${NEW_ROOT}/mnt/cdrom&lt;/span&gt;
+            test_success &amp;#39;Mount filesystem&amp;#39;
+            FS_LOCATION=&amp;#39;mnt/livecd&amp;#39;
+        elif [ &amp;quot;${LOOPTYPE}&amp;quot; = &amp;#39;gcloop&amp;#39; ]
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Build instructions:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;bash language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;c&quot;&gt;# Downloading files....&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$wget&lt;/span&gt; -c http://devbuilds.kaspersky-labs.com/devbuilds/RescueDisk10/kavrescue10.iso
+&lt;span class=&quot;c&quot;&gt;# Installing needed stuff&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$sudo&lt;/span&gt; make -C /usr/ports/archivers/gcpio install clean
+&lt;span class=&quot;nv&quot;&gt;$sudo&lt;/span&gt; make -C /usr/ports/sysutils/squashfs-tools install clean
+&lt;span class=&quot;c&quot;&gt;# Building image&lt;/span&gt;
+&lt;span class=&quot;nv&quot;&gt;$mdconfig&lt;/span&gt; -f kavrescue10.iso
+&lt;span class=&quot;nv&quot;&gt;$mountcd_9660&lt;/span&gt; /dev/md0 /cdrom
+&lt;span class=&quot;nv&quot;&gt;$cp&lt;/span&gt; -v /cdrom/boot/rescue ./
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; image &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;cd &lt;/span&gt;image
+&lt;span class=&quot;nv&quot;&gt;$zcat&lt;/span&gt; /cdrom/boot/rescue.igz |gcpio -id
+&lt;span class=&quot;nv&quot;&gt;$patch&lt;/span&gt; -p0 &amp;lt; ../patch-PXE_kav_rescue_2010.iso.patch
+&lt;span class=&quot;nv&quot;&gt;$mkdir&lt;/span&gt; cdrom &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; cp -R /cdrom/rescue cdrom/
+&lt;span class=&quot;nv&quot;&gt;$mksquashfs&lt;/span&gt; cdrom cdrom.squashfs &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; rm -fr cdrom
+&lt;span class=&quot;nv&quot;&gt;$sudo&lt;/span&gt; cp /cdrom/image.squashfs ./
+&lt;span class=&quot;nv&quot;&gt;$sudo&lt;/span&gt; chmod 644 image.squashfs
+&lt;span class=&quot;nv&quot;&gt;$find&lt;/span&gt; . -print | gcpio -o -H newc &amp;gt; ../rescue.igz &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;cd&lt;/span&gt; ../ &lt;span class=&quot;o&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; rm -fr image/
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Example config pxe:&lt;/p&gt;
+&lt;div class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;ini language-ini&quot; data-lang=&quot;ini&quot;&gt;&lt;span class=&quot;err&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;KAV10&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;rescue&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;RUS&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;kernel&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;data/antivir/kav10/rescue&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;append initrd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;data/antivir/kav10/rescue.igz root=/dev/ram0 cdroot=1 kavlang=ru loop=image.squashfs looptype=squashfs realroot=/&lt;/span&gt;
+
+&lt;span class=&quot;err&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;KAV10&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;rescue&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;ENG&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;kernel&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;data/antivir/kav10/rescue&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;append initrd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;data/antivir/kav10/rescue.igz root=/dav/ram0 cdroot=1 kavlang=en loop=image.squashfs looptype=squashfs realroot=/&lt;/span&gt;
+
+&lt;span class=&quot;err&quot;&gt;label&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;KAV10&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;rescue&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;text&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;mode&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;kernel&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;data/antivir/kav10/rescue&lt;/span&gt;
+&lt;span class=&quot;na&quot;&gt;append initrd&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;data/antivir/kav10/rescue.igz root=/dev/ram0 cdroot=1 kavlang=en loop=image.squashfs looptype=squashfs real_root=/ nox kavshell&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;</content>
+  </entry>
+  
+</feed>

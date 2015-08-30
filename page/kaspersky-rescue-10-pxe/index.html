@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html class="nojs">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Kaspersky Rescue 10 PXE * VG's blog</title>
+    <meta name="description" content="Personal blog of Veniamin Gvozdikov AKA zloidemon">
+    <meta name="viewport" content="width=device-width">
+    <meta name="generator" content="jekyll">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300:latin,cyrillic|Open+Sans::latin,cyrillic">
+    <link rel="stylesheet" href="/assets/app-3923840a886287c3b09bf6d4008fd14e.css">
+  </head>
+  <body class="light">
+    <header id="header">
+      <div id="top-navigation" class="navbar">
+        <ul>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+          <li id="js-theme-switcher"><a href="#">Switch Theme</a></li>
+        </ul>
+        <ul>
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="http://feeds.feedburner.com/zloidemon">RSS</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <article class="post">
+  <header>
+    <h2>Kaspersky Rescue 10 PXE</h2>
+    
+    <ul class="post-info">
+  <li>Date: 27 May 2010</li>
+
+  
+
+  
+    <li>Tagged with: <a href="/tags/PXE.html">PXE</a>, <a href="/tags/Kaspersky.html">Kaspersky</a>, <a href="/tags/rescue.html">rescue</a>, <a href="/tags/boot.html">boot</a>, and <a href="/tags/antivirus.html">antivirus</a></li>
+  
+</ul>
+
+  </header>
+
+  <p><strong>Depends on squashfs-tools &gt; 3!</strong></p>
+
+<p>Patch patch-PXE-kav_rescue_10.iso.patch</p>
+<div class="highlight"><pre><code class="diff language-diff" data-lang="diff"><span class="gd">--- sbin/dmsquash-live-root.orig    2014-01-05 21:26:33.581580759 +0400</span>
+<span class="gi">+++ sbin/dmsquash-live-root 2014-01-06 21:42:30.159646123 +0400</span>
+<span class="gu">@@ -46,9 +46,7 @@ fi</span>
+
+ # determine filesystem type for a filesystem image
+ det_img_fs() {
+<span class="gd">-    local _img=&quot;$1&quot; _loop=$(losetup -f) _fs</span>
+<span class="gd">-    losetup $_loop $_img; _fs=$(det_fs $_loop); losetup -d $_loop</span>
+<span class="gd">-    echo $_fs</span>
+<span class="gi">+    echo squashfs</span>
+ }
+
+ for arg in $CMDLINE; do case $arg in ro|rw) liverw=$arg ;; esac; done
+<span class="gu">@@ -62,7 +60,6 @@ if [ -f $livedev ]; then</span>
+         auto) die &quot;cannot mount live image (unknown filesystem type)&quot; ;;
+         *) FSIMG=$livedev ;;
+     esac
+<span class="gd">-else</span>
+     mount -n -t $fstype -o ${liverw:-ro} $livedev /run/initramfs/live
+     if [ &quot;$?&quot; != &quot;0&quot; ]; then
+         die &quot;Failed to mount block device of live image&quot;
+<span class="gd">--- init.orig   2014-01-05 21:26:33.571246205 +0400</span>
+<span class="gi">+++ init    2014-01-06 19:55:26.324595021 +0400</span>
+<span class="gu">@@ -288,7 +288,7 @@ unset main_loop</span>
+ unset RDRETRY
+
+ if  ! ismounted &quot;/run/initramfs/live&quot;; then
+<span class="gd">-    CDROM_DEVICES=&quot;/dev/sr*&quot;</span>
+<span class="gi">+    CDROM_DEVICES=&quot;/image.squashfs&quot;</span>
+     for i in $CDROM_DEVICES
+     do
+         /sbin/dmsquash-live-root $i
+</code></pre></div>
+<p>Build instructions:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="nv">$mdconfig</span> -f kav_rescue_10.iso
+<span class="nv">$mountcd_9660</span> /dev/md0 /cdrom
+<span class="nv">$cp</span> -v /cdrom/boot/rescue .
+<span class="nv">$mkdir</span> image <span class="o">&amp;&amp;</span> <span class="nb">cd </span>image
+<span class="nv">$lzcat</span> -S lz /cdrom/boot/rescue.igz | cpio -id
+<span class="nv">$patch</span> -p0&lt;../../patch-PXE-kav_rescue_10.iso.patch
+<span class="nv">$mkdir</span> cdrom <span class="o">&amp;&amp;</span> cp -R /cdrom/rescue cdrom/
+<span class="nv">$mksquashfs</span> cdrom image.squashfs <span class="o">&amp;&amp;</span> rm -fr cdrom
+<span class="nv">$find</span> . -print | cpio -o -H newc | lzma -c &gt; /usr/local/tftp/rescue.igz <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ../ <span class="o">&amp;&amp;</span> rm -fr image/
+</code></pre></div>
+<p>Example config pxe:</p>
+<div class="highlight"><pre><code class="ini language-ini" data-lang="ini"><span class="err">label</span> <span class="err">kav</span>
+<span class="err">kernel</span> <span class="err">/rescue</span>
+<span class="na">append initrd</span><span class="o">=</span><span class="s">/rescue.igz root=live rootfstype=auto vga=791 init=/init kav_lang=ru udev liveimg doscsi nomodeset</span>
+
+<span class="err">label</span> <span class="err">kav_text</span>
+<span class="err">kernel</span> <span class="err">/rescue</span>
+<span class="na">append initrd</span><span class="o">=</span><span class="s">/rescue.igz root=live rootfstype=auto vga=791 init=/init kav_lang=ru udev liveimg nox kavshell noresume doscsi nomodeset</span>
+</code></pre></div>
+<p>Files: <a href="http://storage.zlonet.ru/kav/20140106/rescue">kernel</a> and <a href="http://storage.zlonet.ru/kav/20140106/rescue.igz">initrd</a>.</p>
+
+<p><em>DEPRECATED</em></p>
+
+<p>Patch patch-PXE_kav_rescue_2010.iso.patch</p>
+<div class="highlight"><pre><code class="diff language-diff" data-lang="diff"><span class="gd">--- init.orig   2010-05-24 21:40:35.000000000 +0800</span>
+<span class="gi">+++ init    2010-05-25 16:07:38.000000000 +0800</span>
+<span class="gu">@@ -399,7 +399,7 @@ fi</span>
+
+ # Determine root device
+ good_msg &#39;Determining root device...&#39;
+<span class="gd">-while true</span>
+<span class="gi">+while false</span>
+ do
+    while [ &quot;${got_good_root}&quot; != &#39;1&#39; ]
+    do
+<span class="gu">@@ -462,6 +462,8 @@ do</span>
+        fi
+    done
+
+<span class="gi">+REAL_ROOT=/image.squashfs</span>
+<span class="gi">+REAL_ROOT_TYPE=squashfs</span>
+
+    if [ &quot;${CDROOT}&quot; = 1 -a &quot;${got_good_root}&quot; = &#39;1&#39; -a &quot;${REAL_ROOT}&quot; != &quot;/dev/nfs&quot; ]
+    then
+<span class="gu">@@ -521,7 +523,6 @@ then</span>
+    [ -z &quot;${LOOP}&quot; ] &amp;&amp; find_loop
+    [ -z &quot;${LOOPTYPE}&quot; ] &amp;&amp; find_looptype
+
+<span class="gd">-   cache_cd_contents</span>
+
+    # If encrypted, find key and mount, otherwise mount as usual
+    if [ -n &quot;${CRYPT_ROOT}&quot; ]
+<span class="gu">@@ -557,7 +558,8 @@ then</span>
+        elif [ &quot;${LOOPTYPE}&quot; = &#39;squashfs&#39; ]
+        then
+            good_msg &#39;Mounting squashfs filesystem&#39;
+<span class="gd">-           mount -t squashfs -o loop,ro &quot;${NEW_ROOT}/mnt/cdrom/${LOOPEXT}${LOOP}&quot; &quot;${NEW_ROOT}/mnt/livecd&quot;</span>
+<span class="gi">+           mount -t squashfs -o loop,ro /${LOOP} ${NEW_ROOT}/mnt/livecd</span>
+<span class="gi">+           mount -t squashfs -o loop,rw /cdrom.squashfs ${NEW_ROOT}/mnt/cdrom</span>
+            test_success &#39;Mount filesystem&#39;
+            FS_LOCATION=&#39;mnt/livecd&#39;
+        elif [ &quot;${LOOPTYPE}&quot; = &#39;gcloop&#39; ]
+</code></pre></div>
+<p>Build instructions:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="c"># Downloading files....</span>
+<span class="nv">$wget</span> -c http://devbuilds.kaspersky-labs.com/devbuilds/RescueDisk10/kavrescue10.iso
+<span class="c"># Installing needed stuff</span>
+<span class="nv">$sudo</span> make -C /usr/ports/archivers/gcpio install clean
+<span class="nv">$sudo</span> make -C /usr/ports/sysutils/squashfs-tools install clean
+<span class="c"># Building image</span>
+<span class="nv">$mdconfig</span> -f kavrescue10.iso
+<span class="nv">$mountcd_9660</span> /dev/md0 /cdrom
+<span class="nv">$cp</span> -v /cdrom/boot/rescue ./
+<span class="nv">$mkdir</span> image <span class="o">&amp;&amp;</span> <span class="nb">cd </span>image
+<span class="nv">$zcat</span> /cdrom/boot/rescue.igz |gcpio -id
+<span class="nv">$patch</span> -p0 &lt; ../patch-PXE_kav_rescue_2010.iso.patch
+<span class="nv">$mkdir</span> cdrom <span class="o">&amp;&amp;</span> cp -R /cdrom/rescue cdrom/
+<span class="nv">$mksquashfs</span> cdrom cdrom.squashfs <span class="o">&amp;&amp;</span> rm -fr cdrom
+<span class="nv">$sudo</span> cp /cdrom/image.squashfs ./
+<span class="nv">$sudo</span> chmod 644 image.squashfs
+<span class="nv">$find</span> . -print | gcpio -o -H newc &gt; ../rescue.igz <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ../ <span class="o">&amp;&amp;</span> rm -fr image/
+</code></pre></div>
+<p>Example config pxe:</p>
+<div class="highlight"><pre><code class="ini language-ini" data-lang="ini"><span class="err">label</span> <span class="err">KAV10</span> <span class="err">rescue</span> <span class="err">RUS</span>
+<span class="err">kernel</span> <span class="err">data/antivir/kav10/rescue</span>
+<span class="na">append initrd</span><span class="o">=</span><span class="s">data/antivir/kav10/rescue.igz root=/dev/ram0 cdroot=1 kavlang=ru loop=image.squashfs looptype=squashfs realroot=/</span>
+
+<span class="err">label</span> <span class="err">KAV10</span> <span class="err">rescue</span> <span class="err">ENG</span>
+<span class="err">kernel</span> <span class="err">data/antivir/kav10/rescue</span>
+<span class="na">append initrd</span><span class="o">=</span><span class="s">data/antivir/kav10/rescue.igz root=/dav/ram0 cdroot=1 kavlang=en loop=image.squashfs looptype=squashfs realroot=/</span>
+
+<span class="err">label</span> <span class="err">KAV10</span> <span class="err">rescue</span> <span class="err">text</span> <span class="err">mode</span>
+<span class="err">kernel</span> <span class="err">data/antivir/kav10/rescue</span>
+<span class="na">append initrd</span><span class="o">=</span><span class="s">data/antivir/kav10/rescue.igz root=/dev/ram0 cdroot=1 kavlang=en loop=image.squashfs looptype=squashfs real_root=/ nox kavshell</span>
+</code></pre></div>
+</article>
+
+
+
+<!-- DISQUS -->
+<div id="disqus_thread"></div>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    <ul id="bottom-navigation" class="navbar">
+      
+        <li><a href="/archives/2015.html">2015</a></li>
+      
+        <li><a href="/archives/2013.html">2013</a></li>
+      
+        <li><a href="/archives/2011.html">2011</a></li>
+      
+        <li><a href="/archives/2010.html">2010</a></li>
+      
+        <li><a href="/archives/2009.html">2009</a></li>
+      
+    </ul>
+
+    <footer id="footer" role="contentinfo">
+      kindly generated by <a href="https://github.com/mojombo/jekyll">Jekyll</a>
+      with patches by <a href="http://ixti.net">ixti</a>
+      ~
+      and <a href="http://www.vim.org/">Vim</a>
+      ~
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </footer>
+
+    <script async src="/assets/app-7475907271d9c131a242578545901c4d.js"></script>
+  </body>
+</html>

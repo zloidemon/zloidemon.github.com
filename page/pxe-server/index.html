@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html class="nojs">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>PXE server * VG's blog</title>
+    <meta name="description" content="Personal blog of Veniamin Gvozdikov AKA zloidemon">
+    <meta name="viewport" content="width=device-width">
+    <meta name="generator" content="jekyll">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300:latin,cyrillic|Open+Sans::latin,cyrillic">
+    <link rel="stylesheet" href="/assets/app-3923840a886287c3b09bf6d4008fd14e.css">
+  </head>
+  <body class="light">
+    <header id="header">
+      <div id="top-navigation" class="navbar">
+        <ul>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+          <li id="js-theme-switcher"><a href="#">Switch Theme</a></li>
+        </ul>
+        <ul>
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="http://feeds.feedburner.com/zloidemon">RSS</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <article class="post">
+  <header>
+    <h2>PXE server</h2>
+    
+    <ul class="post-info">
+  <li>Date: 28 Jan 2010</li>
+
+  
+
+  
+    <li>Tagged with: <a href="/tags/TFTP.html">TFTP</a>, <a href="/tags/PXE.html">PXE</a>, <a href="/tags/syslinux.html">syslinux</a>, <a href="/tags/gPXE.html">gPXE</a>, <a href="/tags/DHCP.html">DHCP</a>, <a href="/tags/ports.html">ports</a>, and <a href="/tags/FreeBSD.html">FreeBSD</a></li>
+  
+</ul>
+
+  </header>
+
+  <p>Ставим нужный софт:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="nv">$sudo</span> make -C /usr/ports/ftp/tftp-hpa install clean
+<span class="nv">$sudo</span> mkdir -p /var/data/tftp
+<span class="nv">$sudo</span> pkg_add -ri syslinux
+<span class="nv">$sudo</span> cp /usr/local/share/syslinux/gpxelinux.0 /var/data/tftp
+<span class="nv">$sudo</span> mkdir /var/data/tftp/syslinux
+<span class="nv">$sudo</span> cp -v /usr/local/share/syslinux/*.c32 /var/data/tftp/syslinux/
+<span class="nv">$sudo</span> mkdir /var/data/tftp/pxelinux.cfg
+</code></pre></div>
+<p>Некоторые полезные tools:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="nv">$sudo</span> mkdir /var/data/tftp/tools
+<span class="nv">$sudo</span> <span class="nb">cd</span> /var/data/tftp/tools
+<span class="nv">$sudo</span> fetch http://www.memtest.org/download/2.01/memtest86+-2.01.bin.gz
+<span class="nv">$sudo</span> gunzip memtest86+-2.01.bin.gz
+<span class="nv">$sudo</span> fetch http://www.hdt-project.org/raw-attachment/wiki/hdt-0.3.5/hdt_0_3_5.c32
+<span class="c"># Parted Magic</span>
+<span class="nv">$sudo</span> fetch http://cdnetworks-kr-1.dl.sourceforge.net/project/partedmagic/partedmagic/Parted%20Magic%204.8/pmagic-pxe-4.8.zip
+<span class="nv">$sudo</span> tar zxf pmagic-pxe-4.8.zip
+<span class="nv">$sudo</span> mv pmagic-pxe-4.8/pmagic ./
+<span class="c"># Norton Recovery Tool </span>
+<span class="nv">$sudo</span> mkdir symantec <span class="o">&amp;&amp;</span> <span class="nb">cd </span>symantec
+<span class="nv">$sudo</span> fetch ftp://ftp.symantec.com/public/english_us_canada/recovery/2009/NSWRECOVERY.iso
+<span class="nv">$sudo</span> fetch ftp://ftp.symantec.com/public/english_us_canada/recovery/2009/NAV/recovery_nav_x86.iso
+<span class="nv">$sudo</span> fetch ftp://ftp.symantec.com/public/english_us_canada/recovery/2009/NIS/recovery_nis_x86.iso
+<span class="nv">$cd</span> ../
+<span class="c"># Скачать Hirens BootCD можно здесь http://www.hirensbootcd.net</span>
+<span class="nv">$sudo</span> tar xzf Hirens.BootCD.10.1.zip
+<span class="nv">$sudo</span> rm BootCD.txt Burn* DefaultKeyboardPatch.zip changes-10.0-10.1.txt HBCDCustomize.exe
+<span class="nv">$sudo</span> mv Hirens.BootCD.10.1.iso hirens_bootcd.10.1.iso
+</code></pre></div>
+<p>Собственно FreeBSD:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="nv">$sudo</span> mkdir ../freebsd <span class="o">&amp;&amp;</span> <span class="nb">cd</span> ../freebsd
+<span class="nv">$sudo</span> fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/i386/ISO-IMAGES/8.0/8.0-RELEASE-i386-bootonly.iso
+<span class="nv">$sudo</span> dd <span class="k">if</span><span class="o">=</span>/dev/zero <span class="nv">of</span><span class="o">=</span>8.0-RELEASE-i386-bootonly.img <span class="nv">bs</span><span class="o">=</span>1k <span class="nv">count</span><span class="o">=</span>45000
+<span class="nv">$sudo</span> mdconfig -f 8.0-RELEASE-i386-bootonly.img -u 0
+<span class="nv">$sudo</span> bsdlabel -w -B md0 auto
+<span class="nv">$sudo</span> newfs -m 0 md0a
+<span class="nv">$sudo</span> mkdir /tmp/img
+<span class="nv">$sudo</span> mount /dev/md0a /tmp/img
+<span class="nv">$sudo</span> mdconfig -f 8.0-RELEASE-i386-bootonly.iso -u 1
+<span class="nv">$sudo</span> mount_cd9660 /dev/md1 /cdrom/
+<span class="nv">$sudo</span> cp -rv /cdrom/* /tmp/img/
+<span class="nv">$sudo</span> umount /cdrom/ /tmp/img/ <span class="o">&amp;&amp;</span> mdconfig -d -u 0 <span class="o">&amp;&amp;</span> mdconfig -d -u 1
+</code></pre></div>
+<p>Для amd64 все так же только размеры чуток другой:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="nv">$sudo</span> fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/ISO-IMAGES/8.0/8.0-RELEASE-amd64-bootonly.iso
+%sudo dd <span class="k">if</span><span class="o">=</span>/dev/zero <span class="nv">of</span><span class="o">=</span>8.0-RELEASE-amd64-bootonly.img <span class="nv">bs</span><span class="o">=</span>1k <span class="nv">count</span><span class="o">=</span>48000
+</code></pre></div>
+<p>Некоторые GNU/Linux LiveCD:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">%cd /var/data/tftp/data&amp;&amp; sudo mkdir linux&amp;&amp;cd linux
+%sudo fetch http://distro.ibiblio.org/pub/linux/distributions/tinycorelinux/2.x/release/tinycore-current.iso
+%sudo mdconfig -f tinycore-current.iso -u 0
+%sudo mount_cd9660 /dev/md0 /cdrom/
+%sudo mkdir tinycore
+%sudo cp /cdrom/boot/tinycore.gz tinycore/
+%sudo cp /cdrom/boot/bzImage tinycore/
+%sudo umount /cdrom/ <span class="o">&amp;&amp;</span> mdconfig -d -u 0
+%sudo fetch http://cdnetworks-kr-1.dl.sourceforge.net/project/systemrescuecd/sysresccd-x86/1.3.5/systemrescuecd-x86-1.3.5.iso
+%sudo mdconfig -f systemrescuecd-x86-1.3.5.iso -u 0
+%sudo mount_cd9660 /dev/md0 /cdrom/
+%sudo mkdir systemrescuecd
+%sudo cp /cdrom/sysrcd.* systemrescuecd/
+%sudo cp /cdrom/isolinux/rescue* systemrescuecd/
+%sudo cp /cdrom/isolinux/altker* systemrescuecd/
+%sudo cp /cdrom/isolinux/initram.igz systemrescuecd/
+%sudo cp /cdrom/bootdisk/* ../tools/
+%sudo cp -R /cdrom/ntpasswd ../tools/
+%sudo umount /cdrom/ <span class="o">&amp;&amp;</span> mdconfig -d -u 0
+</code></pre></div>
+<p>Антивирусы:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">%cd ../ <span class="o">&amp;&amp;</span> sudo mkdir -p antivir/drweb
+%sudo fetch ftp://ftp.drweb.com/pub/drweb/livecd/minDrWebLiveCD-5.0.1.iso
+%sudo mdconfig -f minDrWebLiveCD-5.0.1.iso -u 0
+%sudo mount_cd9660 /dev/md0 /cdrom/
+%sudo cp -v /cdrom/boot/<span class="o">{</span>initrd,vmlinuz<span class="o">}</span> antivir/drweb/
+%sudo chmod 644 data/antivir/drweb/initrd
+%sudo cp cp -R /cdrom/boot/module antivir/drweb/
+%sudo chmod 644 data/antivir/drweb/module/*
+
+%sudo fetch http://devbuilds.kaspersky-labs.com/devbuilds/RescueDisk/kav_rescue_2008.iso
+%sudo mdconfig -f kav_rescue_2008.iso -u 0
+%sudo mount_cd9660 /dev/md0 /cdrom/
+%sudo mkdir antivir/kav
+%sudo cp /cdrom/isolinux/rescue* antivir/kav/
+%sudo cp /cdrom/image.squashfs antivir/kav/
+%sudo fetch ftp://anti-virus.by/pub/vbarescue.iso
+%sudo mdconfig -f vbarescue.iso -u 0
+%sudo mount_cd9660 /dev/md0 /cdrom
+</code></pre></div>
+<p>Добовляем строки в /etc/rc.conf :</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="nv">tftpd_enable</span><span class="o">=</span><span class="s2">&quot;YES&quot;</span>
+<span class="nv">tftpd_datadir</span><span class="o">=</span><span class="s2">&quot;/var/data/tftp&quot;</span>
+<span class="nv">tftpd_flags</span><span class="o">=</span><span class="s2">&quot;--ipv4 -s&quot;</span>
+</code></pre></div>
+<p>Правим /usr/local/etc/dhcpd.conf :</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">subnet 192.168.3.0 netmask 255.255.255.0 <span class="o">{</span>
+        range 192.168.3.20 192.168.3.255;
+        option routers 192.168.3.100;
+        filename <span class="s2">&quot;gpxelinux.0&quot;</span>;
+        <span class="o">}</span>
+<span class="nv">$sudo</span> /usr/local/etc/rc.d/isc-dhcpd restart
+<span class="nv">$sudo</span> /etc/rc.d/inetd restart
+</code></pre></div>
+</article>
+
+
+
+<!-- DISQUS -->
+<div id="disqus_thread"></div>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    <ul id="bottom-navigation" class="navbar">
+      
+        <li><a href="/archives/2015.html">2015</a></li>
+      
+        <li><a href="/archives/2013.html">2013</a></li>
+      
+        <li><a href="/archives/2011.html">2011</a></li>
+      
+        <li><a href="/archives/2010.html">2010</a></li>
+      
+        <li><a href="/archives/2009.html">2009</a></li>
+      
+    </ul>
+
+    <footer id="footer" role="contentinfo">
+      kindly generated by <a href="https://github.com/mojombo/jekyll">Jekyll</a>
+      with patches by <a href="http://ixti.net">ixti</a>
+      ~
+      and <a href="http://www.vim.org/">Vim</a>
+      ~
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </footer>
+
+    <script async src="/assets/app-7475907271d9c131a242578545901c4d.js"></script>
+  </body>
+</html>

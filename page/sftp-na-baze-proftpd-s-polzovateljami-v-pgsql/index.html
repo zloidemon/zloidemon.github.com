@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html class="nojs">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>SFTP на базе ProFTPD с пользователями в PostgreSQL * VG's blog</title>
+    <meta name="description" content="Personal blog of Veniamin Gvozdikov AKA zloidemon">
+    <meta name="viewport" content="width=device-width">
+    <meta name="generator" content="jekyll">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300:latin,cyrillic|Open+Sans::latin,cyrillic">
+    <link rel="stylesheet" href="/assets/app-3923840a886287c3b09bf6d4008fd14e.css">
+  </head>
+  <body class="light">
+    <header id="header">
+      <div id="top-navigation" class="navbar">
+        <ul>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+          <li id="js-theme-switcher"><a href="#">Switch Theme</a></li>
+        </ul>
+        <ul>
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="http://feeds.feedburner.com/zloidemon">RSS</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <article class="post">
+  <header>
+    <h2>SFTP на базе ProFTPD с пользователями в PostgreSQL</h2>
+    
+    <ul class="post-info">
+  <li>Date: 23 Jan 2010</li>
+
+  
+
+  
+    <li>Tagged with: <a href="/tags/SFTP.html">SFTP</a>, <a href="/tags/ProFTPD.html">ProFTPD</a>, <a href="/tags/PostgreSQL.html">PostgreSQL</a>, <a href="/tags/ports.html">ports</a>, and <a href="/tags/FreeBSD.html">FreeBSD</a></li>
+  
+</ul>
+
+  </header>
+
+  <p>Прочитал много всевозможных статей (не будем показывать пальцем где, это и так все знают), причем во всех было хранение паролей в открытом виде, и вообще мало что связанное с безопасной передачей данных. Вроде все знаем что это не хорошо, но продолжаем делать глупые ошибки.
+Мой выбор пал на proftpd с поддержкой SFTP, но как оказалось в портах не реализована поддержка, но это не помеха&hellip;</p>
+
+<p>Патч берем либо с официального сайта, либо с моей репы.</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">http://www.freebsd.org/cgi/query-pr.cgi?pr=143018
+http://gitorious.org/zloidemon-freebsd-ports/trunk/blobs/master/patches/patch_sftp-proftpd-devel-1.3.3rc2
+</code></pre></div>
+<p>Дальше патчим и тд:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">%cp -R /usr/ports/ftp/proftpd-devel ./
+%patch -p0 &lt;patch_sftp-proftpd-devel-1.3.3rc2
+%sudo make -C proftpd-devel/ config-recursive install clean
+<span class="c"># вообщем с опциями там будет все понятно, что и для чего нужно</span>
+</code></pre></div>
+<p>Писать про установку pgsql я пока не собираюсь, про это и так достаточно написано. Так что перейдем к работе с самой базой данных.</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">%createuser -S -D -R -P files
+%createdb -O files sftp
+%psql -U files -d sftp
+</code></pre></div><div class="highlight"><pre><code class="sql language-sql" data-lang="sql"><span class="n">sftp</span><span class="o">=&gt;</span> <span class="k">CREATE</span> <span class="k">TABLE</span> <span class="n">users</span> <span class="p">(</span><span class="n">id</span> <span class="nb">serial</span> <span class="k">PRIMARY</span> <span class="k">KEY</span><span class="p">,</span><span class="n">sftpuser</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span><span class="n">passwd</span> <span class="nb">text</span><span class="p">,</span><span class="n">uid</span> <span class="nb">int</span><span class="p">,</span><span class="n">gid</span> <span class="nb">int</span><span class="p">,</span><span class="n">home</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">70</span><span class="p">),</span><span class="n">shell</span> <span class="nb">varchar</span><span class="p">(</span><span class="mi">20</span><span class="p">));</span>
+<span class="o">#</span><span class="err">на</span> <span class="err">что</span> <span class="err">там</span> <span class="err">выдаст</span>
+<span class="n">NOTICE</span><span class="p">:</span>  <span class="k">CREATE</span> <span class="k">TABLE</span> <span class="err">создаст</span> <span class="err">подразумеваемую</span> <span class="err">последовательность</span> <span class="ss">&quot;users_id_seq&quot;</span> <span class="err">для</span> <span class="nb">serial</span><span class="o">-</span><span class="err">колонки</span> <span class="ss">&quot;users.id&quot;</span>
+<span class="n">NOTICE</span><span class="p">:</span>  <span class="k">CREATE</span> <span class="k">TABLE</span> <span class="o">/</span> <span class="k">PRIMARY</span> <span class="k">KEY</span> <span class="err">создаст</span> <span class="err">подразумеваемый</span> <span class="err">индекс</span> <span class="ss">&quot;users_pkey&quot;</span> <span class="err">для</span> <span class="err">таблицы</span> <span class="ss">&quot;users&quot;</span>
+<span class="k">CREATE</span> <span class="k">TABLE</span>
+<span class="o">#</span><span class="err">смотрим</span> <span class="err">что</span> <span class="err">имеем</span>
+<span class="n">sftp</span><span class="o">=&gt;</span> <span class="err">\</span><span class="n">d</span>
+                 <span class="n">List</span> <span class="k">of</span> <span class="n">relations</span>
+ <span class="k">Schema</span> <span class="o">|</span>     <span class="n">Name</span>     <span class="o">|</span>   <span class="k">Type</span>   <span class="o">|</span>      <span class="k">Owner</span>
+<span class="c1">--------+--------------+----------+-----------------</span>
+ <span class="k">public</span> <span class="o">|</span> <span class="n">users</span>        <span class="o">|</span> <span class="k">table</span>    <span class="o">|</span> <span class="n">files</span><span class="p">.</span><span class="n">zlonet</span><span class="p">.</span><span class="n">ru</span>
+ <span class="k">public</span> <span class="o">|</span> <span class="n">users_id_seq</span> <span class="o">|</span> <span class="n">sequence</span> <span class="o">|</span> <span class="n">files</span><span class="p">.</span><span class="n">zlonet</span><span class="p">.</span><span class="n">ru</span>
+<span class="p">(</span><span class="mi">2</span> <span class="k">rows</span><span class="p">)</span>
+</code></pre></div>
+<p>Покажу свой конфиг proftpd, но это не означает что его нужно копировать, он и так почти весь default:</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">ServerName                      &quot;Server from HELL&quot;
+ServerType                      standalone        
+DefaultServer                   on
+Port                            21
+
+#UseIPv6                                off
+Umask                           022
+
+MaxInstances                    30
+
+User                            nobody                   
+Group                           nogroup
+
+DefaultRoot ~ 
+AllowOverwrite          on
+
+&lt;Limit SITE_CHMOD&gt;                
+  DenyAll                         
+&lt;/Limit&gt;
+
+SQLAuthTypes            OpenSSL
+SQLBackend              postgres
+SQLAuthenticate         users
+SQLConnectInfo          sftp@localhost files megapass
+SQLUserInfo             users sftpuser passwd uid gid home shell
+RequireValidShell       off
+SQLLogFile              /var/log/proftpd_sql.log
+
+MaxClients              20 &quot;Sorry Max Clients&quot;
+MaxClientsPerHost       10 &quot;Max client from your host&quot;
+MaxLoginAttempts        5 &quot;Max Login Attmps&quot;
+
+SyslogLevel             notice
+UseReverseDNS           off
+
+SFTPEngine      On
+SFTPHostKey     /etc/ssh/ssh_host_rsa_key
+SFTPHostKey     /etc/ssh/ssh_host_dsa_key
+</code></pre></div>
+<p>Собственно комментировать тут нечего, и так все понятно, если что надо можно заглянуть в установленную с proftpd документацию.</p>
+
+<p>Добавление пользователей, для этого написал скрипт, так как вломы генерирова SHA1 ложить в БД и тд.
+Берем скрипт из репы</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">http://gitorious.org/zloidemon-dev/trunk/blobs/master/createftpuser/src/createftpuser.py
+</code></pre></div>
+<p>Для него понадобиться python и модуль:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">%sudo make -C /usr/ports/databases/py-sqlalchemy config-recursive install clean
+<span class="c">#собираем с поддержкой pgsql</span>
+</code></pre></div>
+<p>Сам скрипт прокомментировал достаточно хорошо, так что настроить его для работы с вашей любимой БД не составит труда.</p>
+
+<p>Пример работы:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">./createftpuser.py
+Adding new user
+
+user :blah
+password :test
+uid :14
+gid :14
+home dir :/var/ftp
+shell :
+New user info:
+user : blah
+password : <span class="nb">test</span>
+uid: 14
+gid 14
+home: /var/ftp
+shell: /bin/sh
+add new user y/n :y
+</code></pre></div>
+<p>После работы скрипта можно посмотреть что создалось в БД:</p>
+<div class="highlight"><pre><code class="sql language-sql" data-lang="sql"><span class="n">sftp</span><span class="o">=&gt;</span> <span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="n">users</span><span class="p">;</span>
+ <span class="n">id</span> <span class="o">|</span> <span class="n">sftpuser</span> <span class="o">|</span>               <span class="n">passwd</span>               <span class="o">|</span> <span class="n">uid</span> <span class="o">|</span> <span class="n">gid</span> <span class="o">|</span>   <span class="n">home</span>   <span class="o">|</span>  <span class="n">shell</span>
+<span class="c1">----+----------+------------------------------------+-----+-----+----------+---------</span>
+  <span class="mi">1</span> <span class="o">|</span> <span class="n">blah</span>     <span class="o">|</span> <span class="err">{</span><span class="n">SHA1</span><span class="err">}</span><span class="n">qUqP5cyxm6YcTAhz05Hph5gvu9M</span><span class="o">=</span> <span class="o">|</span>  <span class="mi">14</span> <span class="o">|</span>  <span class="mi">14</span> <span class="o">|</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">ftp</span> <span class="o">|</span> <span class="o">/</span><span class="n">bin</span><span class="o">/</span><span class="n">sh</span>
+<span class="p">(</span><span class="mi">1</span> <span class="err">запись</span><span class="p">)</span>
+</code></pre></div>
+<p>Учитывая данные созданные в таблице, создаем пользователя в системе (в моем случае все пользователи из БД работают от ftp:ftp, которого можно создать через sysinstall).</p>
+
+<p>Подключаемся:</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash">%sftp -oPort<span class="o">=</span>21 blah@host#адрес или домен удаленного сервера.
+Connecting to host...
+The authenticity of host <span class="s1">&#39;[host]:21 ([host]:21)&#39;</span> can<span class="s1">&#39;t be established.</span>
+<span class="s1">RSA key fingerprint is ea:33:59:2c:40:74:7b:a1:18:de:fd:a1:21:fd:bf:e3.</span>
+<span class="s1">Are you sure you want to continue connecting (yes/no)? yes</span>
+<span class="s1">Warning: Permanently added &#39;</span><span class="o">[</span>host<span class="o">]</span>:21<span class="s1">&#39; (RSA) to the list of known hosts.</span>
+<span class="s1">blah@host&#39;</span>s password:
+sftp&gt; ls
+etc       incoming  pub
+</code></pre></div>
+</article>
+
+
+
+<!-- DISQUS -->
+<div id="disqus_thread"></div>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    <ul id="bottom-navigation" class="navbar">
+      
+        <li><a href="/archives/2015.html">2015</a></li>
+      
+        <li><a href="/archives/2013.html">2013</a></li>
+      
+        <li><a href="/archives/2011.html">2011</a></li>
+      
+        <li><a href="/archives/2010.html">2010</a></li>
+      
+        <li><a href="/archives/2009.html">2009</a></li>
+      
+    </ul>
+
+    <footer id="footer" role="contentinfo">
+      kindly generated by <a href="https://github.com/mojombo/jekyll">Jekyll</a>
+      with patches by <a href="http://ixti.net">ixti</a>
+      ~
+      and <a href="http://www.vim.org/">Vim</a>
+      ~
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </footer>
+
+    <script async src="/assets/app-7475907271d9c131a242578545901c4d.js"></script>
+  </body>
+</html>

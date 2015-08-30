@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html class="nojs">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>The JunOS installation script * VG's blog</title>
+    <meta name="description" content="Personal blog of Veniamin Gvozdikov AKA zloidemon">
+    <meta name="viewport" content="width=device-width">
+    <meta name="generator" content="jekyll">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300:latin,cyrillic|Open+Sans::latin,cyrillic">
+    <link rel="stylesheet" href="/assets/app-3923840a886287c3b09bf6d4008fd14e.css">
+  </head>
+  <body class="light">
+    <header id="header">
+      <div id="top-navigation" class="navbar">
+        <ul>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+          <li id="js-theme-switcher"><a href="#">Switch Theme</a></li>
+        </ul>
+        <ul>
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="http://feeds.feedburner.com/zloidemon">RSS</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <article class="post">
+  <header>
+    <h2>The JunOS installation script</h2>
+    
+    <ul class="post-info">
+  <li>Date: 08 Jan 2011</li>
+
+  
+
+  
+    <li>Tagged with: <a href="/tags/JunOS.html">JunOS</a>, <a href="/tags/Juniper.html">Juniper</a>, <a href="/tags/FreeBSD.html">FreeBSD</a>, <a href="/tags/shell.html">shell</a>, and <a href="/tags/script.html">script</a></li>
+  
+</ul>
+
+  </header>
+
+  <p>I don&#39;t like installing manually&hellip; So I&#39;ve written a script for it. This is an autoamtic installation script for the JunOS olive for which you need to be using a version of <a href="http://www.freebsd.org/">FreeBSD</a> &lt; 8.  <a href="http://www.freebsd.org/">FreeBSD</a> 8 is not supported.</p>
+<div class="highlight"><pre><code class="bash language-bash" data-lang="bash"><span class="c">#!/bin/sh</span>
+<span class="nv">FILE</span><span class="o">=</span><span class="s1">&#39;jinstall-10.4R1.9-domestic-signed.tgz&#39;</span>
+<span class="nv">HASH</span><span class="o">=</span>649006003c9773859882411246405a39
+<span class="nv">UNTAR</span><span class="o">=</span><span class="s1">&#39;tar zxf&#39;</span>
+<span class="nv">TAR</span><span class="o">=</span><span class="s1">&#39;tar zcf&#39;</span>
+<span class="nv">WORK</span><span class="o">=</span>tmp
+
+work <span class="o">(){</span>
+    <span class="k">if</span> <span class="o">[</span> -d <span class="nv">$WORK</span> <span class="o">]</span>; <span class="k">then</span>
+<span class="k">        </span>rm -fr <span class="nv">$WORK</span>
+    <span class="k">fi</span>
+<span class="k">    </span>mkdir -p <span class="nv">$WORK</span>
+    <span class="nb">cd</span> <span class="nv">$WORK</span>
+<span class="o">}</span>
+
+dwork <span class="o">(){</span>
+    <span class="nb">cd</span> ../;rm -fr <span class="nv">$WORK</span>
+<span class="o">}</span>
+<span class="k">if</span> <span class="o">[</span> <span class="sb">`</span>sysctl kern.osreldate|awk <span class="s1">&#39;{print $2}&#39;</span><span class="sb">`</span> -le 703000 <span class="o">]</span>; <span class="k">then</span>
+<span class="k">    if</span> <span class="o">[</span> <span class="sb">`</span>md5 <span class="nv">$FILE</span> | awk <span class="s1">&#39;{print $4}&#39;</span><span class="sb">`</span> <span class="o">=</span> <span class="nv">$HASH</span> <span class="o">]</span>; <span class="k">then</span>
+<span class="k">            </span>work
+            <span class="nv">$UNTAR</span> ../<span class="nv">$FILE</span>
+            work
+            <span class="nv">$UNTAR</span> <span class="sb">`</span><span class="nb">echo</span> ../<span class="nv">$FILE</span>|sed -e <span class="s1">&#39;s|-signed||g&#39;</span><span class="sb">`</span>
+            work
+            <span class="nv">$UNTAR</span> ../pkgtools.tgz
+            cp -v /usr/bin/true bin/checkpic
+            <span class="nv">$TAR</span> ../pkgtools.tgz *
+            dwork
+            <span class="nv">$TAR</span> ../../<span class="sb">`</span><span class="nb">echo</span> <span class="nv">$FILE</span>|sed -e <span class="s1">&#39;s|signed|olive|g&#39;</span><span class="sb">`</span> *
+            dwork;dwor
+            pkg_add -f <span class="sb">`</span><span class="nb">echo</span> <span class="nv">$FILE</span>|sed -e <span class="s1">&#39;s|signed|olive|g&#39;</span><span class="sb">`</span>
+            <span class="nb">echo </span><span class="nv">console</span><span class="o">=</span><span class="se">\&quot;</span>vidconsole<span class="se">\&quot;</span>&gt;&gt;/boot/loader.conf
+            reboot
+    <span class="k">else</span>
+<span class="k">        </span><span class="nb">exit</span>
+<span class="nb">    </span><span class="k">fi</span>
+<span class="k">else</span>
+<span class="k">    </span><span class="nb">exit</span>
+<span class="k">fi</span>
+</code></pre></div>
+</article>
+
+
+
+<!-- DISQUS -->
+<div id="disqus_thread"></div>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    <ul id="bottom-navigation" class="navbar">
+      
+        <li><a href="/archives/2015.html">2015</a></li>
+      
+        <li><a href="/archives/2013.html">2013</a></li>
+      
+        <li><a href="/archives/2011.html">2011</a></li>
+      
+        <li><a href="/archives/2010.html">2010</a></li>
+      
+        <li><a href="/archives/2009.html">2009</a></li>
+      
+    </ul>
+
+    <footer id="footer" role="contentinfo">
+      kindly generated by <a href="https://github.com/mojombo/jekyll">Jekyll</a>
+      with patches by <a href="http://ixti.net">ixti</a>
+      ~
+      and <a href="http://www.vim.org/">Vim</a>
+      ~
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </footer>
+
+    <script async src="/assets/app-7475907271d9c131a242578545901c4d.js"></script>
+  </body>
+</html>

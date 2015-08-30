@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html class="nojs">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>DTrace integration features * VG's blog</title>
+    <meta name="description" content="Personal blog of Veniamin Gvozdikov AKA zloidemon">
+    <meta name="viewport" content="width=device-width">
+    <meta name="generator" content="jekyll">
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Open+Sans+Condensed:300:latin,cyrillic|Open+Sans::latin,cyrillic">
+    <link rel="stylesheet" href="/assets/app-3923840a886287c3b09bf6d4008fd14e.css">
+  </head>
+  <body class="light">
+    <header id="header">
+      <div id="top-navigation" class="navbar">
+        <ul>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+          <li id="js-theme-switcher"><a href="#">Switch Theme</a></li>
+        </ul>
+        <ul>
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="http://feeds.feedburner.com/zloidemon">RSS</a></li>
+        </ul>
+      </div>
+    </header>
+
+    <article class="post">
+  <header>
+    <h2>DTrace integration features</h2>
+    
+    <ul class="post-info">
+  <li>Date: 29 Sep 2013</li>
+
+  
+
+  
+    <li>Tagged with: <a href="/tags/DTrace.html">DTrace</a>, <a href="/tags/tarantool.html">tarantool</a>, <a href="/tags/FreeBSD.html">FreeBSD</a>, <a href="/tags/Linux.html">Linux</a>, <a href="/tags/Solaris.html">Solaris</a>, <a href="/tags/OSX.html">OSX</a>, <a href="/tags/kernel.html">kernel</a>, <a href="/tags/C.html">C</a>, and <a href="/tags/CMake.html">CMake</a></li>
+  
+</ul>
+
+  </header>
+
+  <p>This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I&#39;ll explain my troubles and approach to fixing bugs in <a href="http://tarantool.org" title="The Tarantool project">tarantool</a>, a no-sql DB, with common instruments.</p>
+
+<p>This post isn&#39;t yet complete. I&#39;ll add new information after fix/found bugs.</p>
+
+<h2>Instruments to research:</h2>
+
+<p>OSs:</p>
+
+<ul>
+<li>FreeBSD 9.1-RELEASE-p7</li>
+<li>Darwin 12.5.0</li>
+<li>Linux 3.8.13-16.el6uek.x86_64 (Oracle Linux)</li>
+</ul>
+
+<p>Solaris based:</p>
+
+<ul>
+<li>OpenIndiana 151a8 (so old compilers)</li>
+<li>Oracle Linux 11.1 (so old compilers)</li>
+<li>SmartOS latest (all stuff got coredump)</li>
+</ul>
+
+<p>DTrace Versions:</p>
+
+<ul>
+<li>dtrace: Sun D 1.7 (FreeBSD)</li>
+<li>dtrace: Sun D 1.6.2 (Darwin)</li>
+<li>dtrace: Sun D 1.6.3 (Oracle Linux)</li>
+</ul>
+
+<h2>Generate DTrace object twice</h2>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+</code></pre></div>
+<p>If you have a modular application you&#39;ll try to generate many dtrace objects to link that with the application. You get static libraries and then link. This is a common approach to programming but if you use DTrace in more than one library you need run <code>dtrace -G</code> to get one dtrace object which include all providers.</p>
+
+<p>After the first time you get a dtrace object with correct information but you would like to get object for all providers in different libs in one object. I&#39;ll explain the main issue with second generation with an example.</p>
+
+<p>This is an example with one library. You are able to do this on the command line for getting incorrect object because you did correct object before with information about one: ***</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; dtrace -G -s ../../include/dtrace.d ../CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o -o cjson_dtrace_second.o
+
+%&gt; md5 cjson_dtrace.o
+MD5 <span class="o">(</span>cjson_dtrace.o<span class="o">)</span> <span class="o">=</span> 69cc9d1037f106e682464af05205458c
+%&gt; md5 cjson_dtrace_second.o
+MD5 <span class="o">(</span>cjson_dtrace_second.o<span class="o">)</span> <span class="o">=</span> a42c72ae540be068243936afe2d7b868
+</code></pre></div>
+<p>On above list you see mismatched md5 sums. When I found that I started fire to drill-down to object files and look at what&#39;s incorrect.</p>
+
+<p>I got 2 dtrace objects, Using the <code>strings</code> command I found the differences:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; strings -a cjson_dtrace_second.o &gt; dtrace_second
+%&gt; strings -a cjson_dtrace.o &gt; dtrace
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; diff -up dtrace dtrace_second
+</code></pre></div>
+<p>I saw removed functions with dtrace defines for a trace.</p>
+<div class="highlight"><pre><code class="diff language-diff" data-lang="diff"><span class="gd">--- dtrace  2013-09-27 13:47:17.839671510 +0000</span>
+<span class="gi">+++ dtrace_second   2013-09-27 13:47:08.717669720 +0000</span>
+<span class="gu">@@ -117,15 +117,10 @@ vfprintf</span>
+ encode-done
+ char *
+ char *
+<span class="gd">-json_encode</span>
+<span class="gd">-$dtrace140912.json_encode</span>
+ encode-start
+ char *
+ char *
+<span class="gd">-json_encode</span>
+<span class="gd">-$dtrace140912.json_encode</span>
+ new-entry
+<span class="gd">-luaopen_cjson</span>
+ tick-start
+ tick-stop
+ tarantool
+</code></pre></div>
+<p>In the next stage I looked inside <code>.SUNW_dof</code> in section of dtrace object file.</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; objdump -s -j .SUNW_dof cjson_dtrace.o
+</code></pre></div>
+<p>This is correct hex output from dtrace object:</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">cjson_dtrace.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0270 00000000 00000000 00000000 05000000  ................
+ 0280 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 0290 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 02a0 63686172 202a006a 736f6e5f 656e636f  char *.json_enco
+ 02b0 64650024 64747261 63653134 30393132  de.$dtrace140912
+ 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_encode.enc
+ 02d0 6f64652d 73746172 7400696e 74006368  ode-start.int.ch
+ 02e0 6172202a 00696e74 00636861 72202a00  ar *.int.char *.
+ 02f0 6a736f6e 5f656e63 6f646500 24647472  json_encode.$dtr
+ 0300 61636531 34303931 322e6a73 6f6e5f65  ace140912.json_e
+ 0310 6e636f64 65006e65 772d656e 74727900  ncode.new-entry.
+ 0320 6c75616f 70656e5f 636a736f 6e007469  luaopen_cjson.ti
+ 0330 636b2d73 74617274 00696e74 00696e74  ck-start.int.int
+ 0340 00746963 6b2d7374 6f700069 6e740069  .tick-stop.int.i
+ 0350 6e740074 6172616e 746f6f6c 00000000  nt.tarantool....
+ 0360 53756e20 4420312e 37004672 65654253  Sun D 1.7.FreeBS
+ 0370 44000000 00000000 00000000 00000000  D...............
+ 0380 00000000 00000000 00000000 00000000  ................
+</code></pre></div>
+<p>Drill-down to next <code>incorrect</code> object:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; objdump -s -j .SUNW_dof cjson_dtrace_second.o
+</code></pre></div>
+<p>In <code>.SUNW_dof</code> sect I saw empty dtrace providers for tracing function:</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">cjson_dtrace_second.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0190 00000000 00000000 00000000 05000000  ................
+ 01a0 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 01b0 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 01c0 63686172 202a0065 6e636f64 652d7374  char *.encode-st
+ 01d0 61727400 696e7400 63686172 202a0069  art.int.char *.i
+ 01e0 6e740063 68617220 2a006e65 772d656e  nt.char *.new-en
+ 01f0 74727900 7469636b 2d737461 72740069  try.tick-start.i
+ 0200 6e740069 6e740074 69636b2d 73746f70  nt.int.tick-stop
+ 0210 00696e74 00696e74 00746172 616e746f  .int.int.taranto
+ 0220 6f6c0000 00000000 53756e20 4420312e  ol......Sun D 1.
+ 0230 37004672 65654253 44000000 00000000  7.FreeBSD.......
+ 0240 00000000 00000000 00000000 00000000  ................
+</code></pre></div>
+<p>The next step is finding differences in library objects. After running <code>dtrace -G</code> twice I get these changes in main library objects:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; md5 lua_cjson.c.o
+MD5 <span class="o">(</span>lua_cjson.c.o<span class="o">)</span> <span class="o">=</span> bdc0afbb0869f7bee70c29a7ba538127
+%&gt; md5 lua_cjson.c.o.dtrace
+MD5 <span class="o">(</span>lua_cjson.c.o.dtrace<span class="o">)</span> <span class="o">=</span> 0d65212c87350dceb64f71429b72ce3b
+</code></pre></div>
+<p>I looked at the <code>.text</code> section of the object file in <code>objdump</code> because this section contains the executible code.</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; objdump -d -j .text lua_cjson.c.o.dtrace &gt; dtrace
+%&gt; objdump -d -j .text lua_cjson.c.o &gt; non-dtrace
+</code></pre></div>
+<p>I used the <code>diff</code> command to confirm that the changes are correct:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; diff -up non-dtrace dtrace
+</code></pre></div><div class="highlight"><pre><code class="diff language-diff" data-lang="diff"><span class="gd">--- non-dtrace  2013-09-27 13:42:05.811669039 +0000</span>
+<span class="gi">+++ dtrace  2013-09-27 13:41:59.149669338 +0000</span>
+<span class="gu">@@ -1,5 +1,5 @@</span>
+
+<span class="gd">-lua_cjson.c.o:     file format elf64-x86-64-freebsd</span>
+<span class="gi">+lua_cjson.c.o.dtrace:     file format elf64-x86-64-freebsd</span>
+
+ Disassembly of section .text:
+
+<span class="gu">@@ -11,7 +11,11 @@ Disassembly of section .text:</span>
+        c:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+       10:  e8 1b 00 00 00          callq  30 &lt;lua_cjson_new&gt;
+       15:  89 45 f4                mov    %eax,-0xc(%rbp)
+<span class="gd">-      18:  e8 00 00 00 00          callq  1d &lt;luaopen_cjson+0x1d&gt;</span>
+<span class="gi">+      18:  90                      nop</span>
+<span class="gi">+      19:  90                      nop</span>
+<span class="gi">+      1a:  90                      nop</span>
+<span class="gi">+      1b:  90                      nop</span>
+<span class="gi">+      1c:  90                      nop</span>
+       1d:  b8 01 00 00 00          mov    $0x1,%eax
+       22:  48 83 c4 10             add    $0x10,%rsp
+       26:  5d                      pop    %rbp
+<span class="gu">@@ -217,7 +221,7 @@ Disassembly of section .text:</span>
+      34b:  c3                      retq
+      34c:  0f 1f 40 00             nopl   0x0(%rax)
+
+<span class="gd">-0000000000000350 &lt;json_encode&gt;:</span>
+<span class="gi">+0000000000000350 &lt;$dtrace140912.json_encode&gt;:</span>
+      350:  55                      push   %rbp
+      351:  48 89 e5                mov    %rsp,%rbp
+      354:  48 83 ec 50             sub    $0x50,%rsp
+<span class="gu">@@ -227,18 +231,22 @@ Disassembly of section .text:</span>
+      365:  48 89 45 f0             mov    %rax,-0x10(%rbp)
+      369:  8b 7d bc                mov    -0x44(%rbp),%edi
+      36c:  48 8b 75 c0             mov    -0x40(%rbp),%rsi
+<span class="gd">-     370:  e8 00 00 00 00          callq  375 &lt;json_encode+0x25&gt;</span>
+<span class="gi">+     370:  90                      nop</span>
+<span class="gi">+     371:  90                      nop</span>
+<span class="gi">+     372:  90                      nop</span>
+<span class="gi">+     373:  90                      nop</span>
+<span class="gi">+     374:  90                      nop</span>
+      375:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+<span class="gd">-     379:  e8 00 00 00 00          callq  37e &lt;json_encode+0x2e&gt;</span>
+<span class="gi">+     379:  e8 00 00 00 00          callq  37e &lt;$dtrace140912.json_encode+0x2e&gt;</span>
+      37e:  b1 01                   mov    $0x1,%cl
+      380:  3d 01 00 00 00          cmp    $0x1,%eax
+      385:  88 4d bb                mov    %cl,-0x45(%rbp)
+<span class="gd">-     388:  0f 84 21 00 00 00       je     3af &lt;json_encode+0x5f&gt;</span>
+<span class="gi">+     388:  0f 84 21 00 00 00       je     3af &lt;$dtrace140912.json_encode+0x5f&gt;</span>
+      38e:  be 01 00 00 00          mov    $0x1,%esi
+      393:  48 8d 14 25 00 00 00    lea    0x0,%rdx
+      39a:  00
+      39b:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+<span class="gd">-     39f:  e8 00 00 00 00          callq  3a4 &lt;json_encode+0x54&gt;</span>
+<span class="gi">+     39f:  e8 00 00 00 00          callq  3a4 &lt;$dtrace140912.json_encode+0x54&gt;</span>
+      3a4:  3d 00 00 00 00          cmp    $0x0,%eax
+      3a9:  0f 95 c1                setne  %cl
+      3ac:  88 4d bb                mov    %cl,-0x45(%rbp)
+<span class="gu">@@ -247,13 +255,13 @@ Disassembly of section .text:</span>
+      3b6:  81 b9 38 05 00 00 00    cmpl   $0x0,0x538(%rcx)
+      3bd:  00 00 00
+      3c0:  88 45 ba                mov    %al,-0x46(%rbp)
+<span class="gd">-     3c3:  0f 85 1b 00 00 00       jne    3e4 &lt;json_encode+0x94&gt;</span>
+<span class="gi">+     3c3:  0f 85 1b 00 00 00       jne    3e4 &lt;$dtrace140912.json_encode+0x94&gt;</span>
+      3c9:  be 00 00 00 00          mov    $0x0,%esi
+      3ce:  48 8d 45 d0             lea    -0x30(%rbp),%rax
+      3d2:  48 89 45 c8             mov    %rax,-0x38(%rbp)
+      3d6:  48 8b 7d c8             mov    -0x38(%rbp),%rdi
+<span class="gd">-     3da:  e8 00 00 00 00          callq  3df &lt;json_encode+0x8f&gt;</span>
+<span class="gd">-     3df:  e9 17 00 00 00          jmpq   3fb &lt;json_encode+0xab&gt;</span>
+<span class="gi">+     3da:  e8 00 00 00 00          callq  3df &lt;$dtrace140912.json_encode+0x8f&gt;</span>
+<span class="gi">+     3df:  e9 17 00 00 00          jmpq   3fb &lt;$dtrace140912.json_encode+0xab&gt;</span>
+      3e4:  48 8b 45 f0             mov    -0x10(%rbp),%rax
+      3e8:  48 05 00 05 00 00       add    $0x500,%rax
+      3ee:  48 89 45 c8             mov    %rax,-0x38(%rbp)
+<span class="gu">@@ -271,16 +279,20 @@ Disassembly of section .text:</span>
+      422:  48 8b 7d f8             mov    -0x8(%rbp),%rdi
+      426:  48 8b 75 c0             mov    -0x40(%rbp),%rsi
+      42a:  48 63 55 bc             movslq -0x44(%rbp),%rdx
+<span class="gd">-     42e:  e8 00 00 00 00          callq  433 &lt;json_encode+0xe3&gt;</span>
+<span class="gi">+     42e:  e8 00 00 00 00          callq  433 &lt;$dtrace140912.json_encode+0xe3&gt;</span>
+      433:  48 8b 45 f0             mov    -0x10(%rbp),%rax
+      437:  81 b8 38 05 00 00 00    cmpl   $0x0,0x538(%rax)
+      43e:  00 00 00
+<span class="gd">-     441:  0f 85 09 00 00 00       jne    450 &lt;json_encode+0x100&gt;</span>
+<span class="gi">+     441:  0f 85 09 00 00 00       jne    450 &lt;$dtrace140912.json_encode+0x100&gt;</span>
+      447:  48 8b 7d c8             mov    -0x38(%rbp),%rdi
+<span class="gd">-     44b:  e8 00 00 00 00          callq  450 &lt;json_encode+0x100&gt;</span>
+<span class="gi">+     44b:  e8 00 00 00 00          callq  450 &lt;$dtrace140912.json_encode+0x100&gt;</span>
+      450:  8b 7d bc                mov    -0x44(%rbp),%edi
+      453:  48 8b 75 c0             mov    -0x40(%rbp),%rsi
+<span class="gd">-     457:  e8 00 00 00 00          callq  45c &lt;json_encode+0x10c&gt;</span>
+<span class="gi">+     457:  90                      nop</span>
+<span class="gi">+     458:  90                      nop</span>
+<span class="gi">+     459:  90                      nop</span>
+<span class="gi">+     45a:  90                      nop</span>
+<span class="gi">+     45b:  90                      nop</span>
+      45c:  b8 01 00 00 00          mov    $0x1,%eax
+      461:  48 83 c4 50             add    $0x50,%rsp
+      465:  5d                      pop    %rbp
+</code></pre></div>
+<p>As seen above, DTrace modifies an object file with use together dtrace and library objects.</p>
+
+<h2>Doesn&#39;t work multi-PROVIDER in MODULE </h2>
+
+<p>This is the next main issue with integration. It doesn&#39;t work on anything providers in one module (application). I always got one working provider in application. The trouble related to many dtrace objects which I wanted use when I linked application. If you have a few dtrace objects I&#39;ll link its in binary but works only <code>first</code> provider (depended by position object file in linking proccess).*****</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; cat ../include/dtrace.d
+</code></pre></div>
+<p>Main providers from dtrace file:</p>
+<div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">coro</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">new__entry</span><span class="p">();</span>
+<span class="p">};</span>
+<span class="n">provider</span> <span class="n">ev</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">tick__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">tick__stop</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="n">provider</span> <span class="n">cjson</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">encode__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">encode__done</span><span class="p">(</span><span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">new__entry</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>It doesn&#39;t work because we need to run DTrace twice. See &ldquo;Generate DTrace object twice&rdquo; for more details.</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; dtrace -G  -x nolibs -s ../include/dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o CMakeFiles/coro.dir/third_party/coro/coro.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o
+
+%&gt; dtrace -G  -s ../include/dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o CMakeFiles/coro.dir/third_party/coro/coro.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o -o probes.o
+
+%&gt; md5 probes.o dtrace.o
+MD5 <span class="o">(</span>probes.o<span class="o">)</span> <span class="o">=</span> bc2c205b019c5e948cfba89ff098c7e8
+MD5 <span class="o">(</span>dtrace.o<span class="o">)</span> <span class="o">=</span> bc2c205b019c5e948cfba89ff098c7e8
+</code></pre></div>
+<p>I split the dtrace file into several <code>.d</code> files. After that I got a few dtrace objects from correct object files.</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; dtrace -G  -s ../include/dtrace.d  CMakeFiles/cjson.dir/third_party/lua-cjson/fpconv.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/lua_cjson.c.o CMakeFiles/cjson.dir/third_party/lua-cjson/strbuf.c.o -o dtrace/cjson_dtrace.o
+
+%&gt; cat ../third_party/lua-cjson/cjson_dtrace.d
+</code></pre></div><div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">cjson</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">encode__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">encode__done</span><span class="p">(</span><span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">new__entry</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; dtrace -G  -s ../third_party/libev/ev_dtrace.d  CMakeFiles/ev.dir/third_party/tarantool_ev.c.o -o dtrace/ev_dtrace.o
+
+%&gt; cat ../third_party/libev/ev_dtrace.d
+</code></pre></div><div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">ev</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">tick__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">tick__stop</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; dtrace -G  -s ../third_party/coro/coro_dtrace.d  CMakeFiles/coro.dir/third_party/coro/coro.c.o -o dtrace/coro_dtrace.o
+%&gt; cat ../third_party/coro/coro_dtrace.d
+</code></pre></div><div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">coro</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">new__entry</span><span class="p">();</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>It worked when I linked one dtrace object at the end of line:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std<span class="o">=</span>c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/cjson_dtrace.o
+</code></pre></div>
+<p>Providers works in module:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 cjson43089     tarantool_box                       json_encode encode-done
+56572 cjson43089     tarantool_box                       json_encode encode-start
+56573 cjson43089     tarantool_box                     luaopen_cjson new-entry
+56574 cjson43090     tarantool_box                       json_encode encode-done
+56575 cjson43090     tarantool_box                       json_encode encode-start
+56576 cjson43090     tarantool_box                     luaopen_cjson new-entry
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std<span class="o">=</span>c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/ev_dtrace.o
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571    ev42775     tarantool_box                            ev_run tick-start
+56572    ev42775     tarantool_box                            ev_run tick-stop
+56573    ev42776     tarantool_box                            ev_run tick-start
+56574    ev42776     tarantool_box                            ev_run tick-stop
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std<span class="o">=</span>c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/core_dtrace.o
+
+<span class="sb">```</span> sh
+%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571  coro43386     tarantool_box                         coro_init new-entry
+56572  coro43387     tarantool_box                         coro_init new-entry
+</code></pre></div>
+<p>This shows the main issue with linking all <code>*.o</code> dtrace objects. If want try that You&#39;ll get only one working provider because it is linked with  sorted objects and first is cjson alphabetically .</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std<span class="o">=</span>c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/*.o
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 cjson43681     tarantool_box                       json_encode encode-done
+56572 cjson43681     tarantool_box                       json_encode encode-start
+56573 cjson43681     tarantool_box                     luaopen_cjson new-entry
+56574 cjson43682     tarantool_box                       json_encode encode-done
+56575 cjson43682     tarantool_box                       json_encode encode-start
+56576 cjson43682     tarantool_box                     luaopen_cjson new-entry
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std<span class="o">=</span>c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/coro_dtrace.o ../../dtrace/ev_dtrace.o ../../dtrace/cjson_dtrace.o
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571  coro43978     tarantool_box                         coro_init new-entry
+56572  coro43979     tarantool_box                         coro_init new-entry
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; /usr/local/bin/clang++33    -fno-omit-frame-pointer -fno-stack-protector -fexceptions -funwind-tables -std<span class="o">=</span>c++11 -fno-rtti -Wall -Wextra -Wno-sign-compare -Wno-strict-aliasing    CMakeFiles/tarantool_box.dir/tuple.cc.o CMakeFiles/tarantool_box.dir/tuple_convert.cc.o CMakeFiles/tarantool_box.dir/tuple_update.cc.o CMakeFiles/tarantool_box.dir/key_def.cc.o CMakeFiles/tarantool_box.dir/index.cc.o CMakeFiles/tarantool_box.dir/hash_index.cc.o CMakeFiles/tarantool_box.dir/tree_index.cc.o CMakeFiles/tarantool_box.dir/bitset_index.cc.o CMakeFiles/tarantool_box.dir/space.cc.o CMakeFiles/tarantool_box.dir/port.cc.o CMakeFiles/tarantool_box.dir/request.cc.o CMakeFiles/tarantool_box.dir/txn.cc.o CMakeFiles/tarantool_box.dir/box.cc.o CMakeFiles/tarantool_box.dir/lua/box.lua.c.o CMakeFiles/tarantool_box.dir/lua/box_net.lua.c.o CMakeFiles/tarantool_box.dir/lua/misc.lua.c.o CMakeFiles/tarantool_box.dir/lua/sql.lua.c.o CMakeFiles/tarantool_box.dir/box_lua.cc.o CMakeFiles/tarantool_box.dir/box_lua_space.cc.o CMakeFiles/tarantool_box.dir/__/__/cfg/tarantool_box_cfg.c.o -o tarantool_box libltbox.a ../../cfg/libcfg.a ../libcore.a ../../libev.a ../../libeio.a ../../libcoro.a ../../libgopt.a ../../libcjson.a ../../third_party/luajit/src/libluajit.a ../../libmisc.a -lpthread -lintl -lelf ../lib/bitset/libbitset.a ../lib/bit/libbit.a -L/usr/local/lib ../../dtrace/ev_dtrace.o ../../dtrace/coro_dtrace.o ../../dtrace/cjson_dtrace.o
+</code></pre></div><div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+56571    ev44268     tarantool_box                            ev_run tick-start
+56572    ev44268     tarantool_box                            ev_run tick-stop
+56573    ev44269     tarantool_box                            ev_run tick-start
+56574    ev44269     tarantool_box                            ev_run tick-stop
+</code></pre></div>
+<p>The issue is solved with use one common dtrace object for all libs. You need to run:</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">dtrace -G -s file.d *.o -o common.o
+</code></pre></div>
+<p>And then link libs, objects and common.o to the binary.</p>
+
+<h2>Wildcards don&#39;t work.</h2>
+
+<p>I fixed first issue. Wildcards do not work for all providers. </p>
+
+<p>Ready to use providers in module:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+ 2789  coro23800     tarantool_box                         coro_init new-entry
+ 2790    ev23800     tarantool_box                            ev_run tick-start
+ 2791    ev23800     tarantool_box                            ev_run tick-stop
+ 2792 cjson23800     tarantool_box                       json_encode encode-done
+ 2793 cjson23800     tarantool_box                       json_encode encode-start
+ 2893  coro23798     tarantool_box                         coro_init new-entry
+ 2894    ev23798     tarantool_box                            ev_run tick-start
+ 2895    ev23798     tarantool_box                            ev_run tick-stop
+ 2896 cjson23798     tarantool_box                       json_encode encode-done
+ 2897 cjson23798     tarantool_box                       json_encode encode-start
+</code></pre></div>
+<p>If I had file.d which contained: </p>
+<div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">cjson</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">new__entry</span><span class="p">();</span>
+    <span class="n">probe</span> <span class="nf">encode__start</span><span class="p">();</span>
+    <span class="n">probe</span> <span class="nf">encode__done</span><span class="p">(</span><span class="kt">int</span> <span class="n">len</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="n">provider</span> <span class="n">coro</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">new__entry</span><span class="p">();</span>
+<span class="p">};</span>
+<span class="n">provider</span> <span class="n">ev</span> <span class="p">{</span>
+    <span class="n">probe</span> <span class="n">tick__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+    <span class="n">probe</span> <span class="nf">tick__stop</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>I would got only one working <code>cjson*:</code>:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -n <span class="s1">&#39;cjson*::json_encode:encode-done&#39;</span>
+dtrace: description <span class="s1">&#39;cjson*::json_encode:encode-done&#39;</span> matched 2 probes
+CPU     ID                    FUNCTION:NAME
+ 1      4          json_encode:encode-done
+ 0      4          json_encode:encode-done
+ 1      4          json_encode:encode-done
+ 1      4          json_encode:encode-done
+^C
+</code></pre></div>
+<p>Empty results for another provider in the module:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -n coro*:::
+
+^C
+</code></pre></div>
+<p>The trouble relates to position providers in <code>file.d</code>.</p>
+
+<p>Not fixed in <a href="http://FreeBSD.org" title="The main OS">FreeBSD</a>, You have to use one name for all providers:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+56571 tarantool75366     tarantool_box                       json_encode encode-done
+56572 tarantool75366     tarantool_box                       json_encode encode-start
+56573 tarantool75366     tarantool_box                     luaopen_cjson new-entry
+56574 tarantool75366     tarantool_box                         coro_init new-entry
+56575 tarantool75366     tarantool_box                            ev_run tick-start
+56576 tarantool75366     tarantool_box                            ev_run tick-stop
+56577 tarantool75367     tarantool_box                       json_encode encode-done
+56578 tarantool75367     tarantool_box                       json_encode encode-start
+56579 tarantool75367     tarantool_box                     luaopen_cjson new-entry
+56580 tarantool75367     tarantool_box                         coro_init new-entry
+56581 tarantool75367     tarantool_box                            ev_run tick-start
+56582 tarantool75367     tarantool_box                            ev_run tick-stop
+</code></pre></div>
+<h2>All the providers must use the code</h2>
+
+<p>If you defined a lot of providers in the D file, but some of providers doesn&#39;t use the code, then all providers doesn&#39;t work.</p>
+
+<p>For example you have:</p>
+<div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">lua_cjson</span> <span class="p">{</span>
+       <span class="n">probe</span> <span class="n">start</span><span class="p">();</span>
+       <span class="n">probe</span> <span class="nf">end</span><span class="p">(</span><span class="kt">int</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="n">provider</span> <span class="n">coro</span> <span class="p">{</span>
+       <span class="n">probe</span> <span class="n">new__entry</span><span class="p">();</span>
+<span class="p">};</span>
+<span class="n">provider</span> <span class="n">ev</span> <span class="p">{</span>
+       <span class="n">probe</span> <span class="n">tick__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+       <span class="n">probe</span> <span class="nf">tick__stop</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>But providers <code>lua_cjson</code> and <code>coro</code> doesn&#39;t use in code but defined in D file. You&#39;ll have:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+</code></pre></div>
+<p>If you change file as below:</p>
+<div class="highlight"><pre><code class="c language-c" data-lang="c"><span class="n">provider</span> <span class="n">ev</span> <span class="p">{</span>
+       <span class="n">probe</span> <span class="n">tick__start</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+       <span class="n">probe</span> <span class="nf">tick__stop</span><span class="p">(</span><span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Then run tarantool again you&#39;ll have:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+56642    ev32305     tarantool_box                            ev_run tick-start
+56643    ev32305     tarantool_box                            ev_run tick-stop
+</code></pre></div>
+<p>This is bug on <a href="http://FreeBSD.org" title="The main OS">FreeBSD</a> and <a href="http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html" title="Oracle Linux UEK3">Oracle Linux</a>.</p>
+
+<h2>Kernel panic by empty MODULE</h2>
+
+<p>If you run application You&#39;ll get access to providers:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+  ID   PROVIDER            MODULE                          FUNCTION NAME
+   4  cjson2015     tarantool_box                       json_encode encode-done
+   5  cjson2015     tarantool_box                       json_encode encode-start
+   6  cjson2015     tarantool_box                     luaopen_cjson new-entry
+   7   coro2015     tarantool_box                         coro_init new-entry
+   8     ev2015     tarantool_box                            ev_run tick-start
+   9     ev2015     tarantool_box                            ev_run tick-stop
+  10  cjson2016     tarantool_box                       json_encode encode-done
+  11  cjson2016     tarantool_box                       json_encode encode-start
+  12  cjson2016     tarantool_box                     luaopen_cjson new-entry
+  13   coro2016     tarantool_box                         coro_init new-entry
+  14     ev2016     tarantool_box                            ev_run tick-start
+  15     ev2016     tarantool_box                            ev_run tick-stop
+</code></pre></div>
+<p>But If you run <code>dtrace -m tarantool_box</code> and then shutdown tarantool_box You&#39;ll get a kernel panic:</p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">#&gt;  kgdb kernel.debug /var/crash/vmcore.0
+GNU gdb 6.1.1 [FreeBSD]
+Copyright 2004 Free Software Foundation, Inc.
+GDB is free software, covered by the GNU General Public License, and you are
+welcome to change it and/or distribute copies of it under certain conditions.
+Type &quot;show copying&quot; to see the conditions.
+There is absolutely no warranty for GDB.  Type &quot;show warranty&quot; for details.
+This GDB was configured as &quot;amd64-marcel-freebsd&quot;...
+
+Unread portion of the kernel message buffer:
+kernel trap 12 with interrupts disabled
+
+
+Fatal trap 12: page fault while in kernel mode
+cpuid = 1; apic id = 01
+fault virtual address   = 0xfffffdffd8ecf3e2
+fault code      = supervisor read data, page not present
+instruction pointer = 0x20:0xffffffff81a4a7fd
+stack pointer           = 0x28:0xffffff80d53119d0
+frame pointer           = 0x28:0xffffff80d53119f0
+code segment        = base 0x0, limit 0xfffff, type 0x1b
+            = DPL 0, pres 1, long 1, def32 0, gran 1
+processor eflags    = resume, IOPL = 1
+current process     = 2023 (tarantool_box)
+trap number     = 12
+panic: page fault
+cpuid = 1
+KDB: stack backtrace:
+#0 0xffffffff809538a6 at kdb_backtrace+0x66
+#1 0xffffffff8091ac8e at panic+0x1ce
+#2 0xffffffff80c17990 at trap_fatal+0x290
+#3 0xffffffff80c17cfc at trap_pfault+0x21c
+#4 0xffffffff80c182f5 at trap+0x365
+#5 0xffffffff80c025f3 at calltrap+0x8
+#6 0xffffffff81cb15fd at fasttrap_fork+0x27d
+#7 0xffffffff808eaea9 at fork1+0x1519
+#8 0xffffffff808ebc12 at sys_fork+0x22
+#9 0xffffffff80c1713a at amd64_syscall+0x5ea
+#10 0xffffffff80c028d7 at Xfast_syscall+0xf7
+Uptime: 5m12s
+Dumping 356 out of 3001 MB:..5%..14%..23%..32%..41%..54%..63%..72%..81%..95%
+
+.... Loading modules skipped ....
+
+#0  doadump (textdump=Variable &quot;textdump&quot; is not available.
+) at pcpu.h:224
+224     __asm(&quot;movq %%gs:0,%0&quot; : &quot;=r&quot; (td));
+(kgdb) list *0xffffffff81a4a7fd
+0xffffffff81a4a7fd is in dtrace_assfail (/usr/src/sys/modules/dtrace/dtrace/../../../cddl/contrib/opensolaris/uts/common/dtrace/dtrace.c:603).
+598 }
+599
+600 int
+601 dtrace_assfail(const char *a, const char *f, int l)
+602 {
+603     dtrace_panic(&quot;assertion failed: %s, file: %s, line: %d&quot;, a, f, l);
+604
+605     /*
+606      * We just need something here that even the most clever compiler
+607      * cannot optimize away.
+(kgdb) backtrace
+#0  doadump (textdump=Variable &quot;textdump&quot; is not available.
+) at pcpu.h:224
+#1  0xffffffff8091a771 in kern_reboot (howto=260) at /usr/src/sys/kern/kern_shutdown.c:448
+#2  0xffffffff8091ac67 in panic (fmt=0x1 &lt;Address 0x1 out of bounds&gt;) at /usr/src/sys/kern/kern_shutdown.c:636
+#3  0xffffffff80c17990 in trap_fatal (frame=0xc, eva=Variable &quot;eva&quot; is not available.
+) at /usr/src/sys/amd64/amd64/trap.c:857
+#4  0xffffffff80c17cfc in trap_pfault (frame=0xffffff80d5311920, usermode=0) at /usr/src/sys/amd64/amd64/trap.c:773
+#5  0xffffffff80c182f5 in trap (frame=0xffffff80d5311920) at /usr/src/sys/amd64/amd64/trap.c:456
+#6  0xffffffff80c025f3 in calltrap () at /usr/src/sys/amd64/amd64/exception.S:228
+#7  0xffffffff81a4a7fd in dtrace_assfail (a=0xffffffff81cb4bc6 &quot;cp-&gt;p_dtrace_count == 0&quot;, f=0xfffffe005721a81c &quot;coro*&quot;, l=Variable &quot;l&quot; is not available.
+)
+    at /usr/src/sys/modules/dtrace/dtrace/../../../cddl/contrib/opensolaris/uts/common/dtrace/dtrace.c:603
+#8  0xffffffff81cb15fd in fasttrap_fork (p=0xfffffe00a83b64a0, cp=0xfffffe005711d940)
+    at /usr/src/sys/modules/dtrace/fasttrap/../../../cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c:479
+#9  0xffffffff808eaea9 in fork1 (td=0xfffffe002b730470, flags=20, pages=Variable &quot;pages&quot; is not available.
+) at /usr/src/sys/kern/kern_fork.c:694
+#10 0xffffffff808ebc12 in sys_fork (td=0xfffffe002b730470, uap=Variable &quot;uap&quot; is not available.
+) at /usr/src/sys/kern/kern_fork.c:110
+#11 0xffffffff80c1713a in amd64_syscall (td=0xfffffe002b730470, traced=0) at subr_syscall.c:135
+#12 0xffffffff80c028d7 in Xfast_syscall () at /usr/src/sys/amd64/amd64/exception.S:387
+#13 0x0000000801731a7c in ?? ()
+</code></pre></div>
+<p>Mark Johnston send me <a href="http://svnweb.freebsd.org/base/head/sys/cddl/contrib/opensolaris/uts/common/dtrace/fasttrap.c?r1=254198&amp;r2=254197&amp;pathrev=254198" title="Fix panic">FIX</a> panic. I am planing to try the patch.</p>
+
+<h2>CMake automation</h2>
+
+<p>Integration with CMake or another build tools is painful because you need do <code>dtrace -G</code> for one or many objects.
+But that is not needed on on OSX, this is the best way and more convenient. See example with full hack linking to library/binary:</p>
+<div class="highlight"><pre><code class="cmake language-cmake" data-lang="cmake"><span class="nb">set</span><span class="p">(</span><span class="s">cjson_obj</span><span class="p">)</span>
+
+<span class="nb">add_library</span><span class="p">(</span><span class="s">cjson_objs</span> <span class="s">OBJECT</span> <span class="s">lua_cjson.c</span> <span class="s">strbuf.c</span> <span class="o">${</span><span class="nv">FPCONV_SOURCES</span><span class="o">}</span><span class="p">)</span>
+<span class="nb">set_target_properties</span><span class="p">(</span><span class="s">cjson_objs</span> <span class="s">PROPERTIES</span> <span class="s">POSITION_INDEPENDENT_CODE</span> <span class="s">ON</span><span class="p">)</span>
+<span class="nb">set</span><span class="p">(</span><span class="s">cjson_obj</span> <span class="o">${</span><span class="nv">cjson_obj</span><span class="o">}</span> <span class="err">$</span><span class="s">&lt;TARGET_OBJECTS:cjson_objs&gt;</span><span class="p">)</span>
+
+<span class="nb">if</span><span class="p">(</span><span class="s">ENABLE_DTRACE</span> <span class="s">AND</span> <span class="s">DTRACE</span><span class="p">)</span>
+    <span class="nb">message</span><span class="p">(</span><span class="s">STATUS</span> <span class="s2">&quot;DTrace found and enabled&quot;</span><span class="p">)</span>
+    <span class="nb">add_definitions</span><span class="p">(</span><span class="s">-DENABLE_DTRACE</span><span class="p">)</span>
+    <span class="nb">set</span><span class="p">(</span><span class="s">D_FILE</span> <span class="o">${</span><span class="nv">PROJECT_SOURCE_DIR</span><span class="o">}</span><span class="s">/cjson_dtrace</span><span class="p">)</span>
+    <span class="nb">execute_process</span><span class="p">(</span>
+       <span class="s">COMMAND</span> <span class="o">${</span><span class="nv">DTRACE</span><span class="o">}</span> <span class="s">-h</span> <span class="s">-s</span> <span class="o">${</span><span class="nv">D_FILE</span><span class="o">}</span><span class="s">.d</span> <span class="s">-o</span> <span class="o">${</span><span class="nv">D_FILE</span><span class="o">}</span><span class="s">.h</span>
+    <span class="p">)</span>
+    <span class="nb">if</span><span class="p">(</span><span class="o">${</span><span class="nv">CMAKE_SYSTEM_NAME</span><span class="o">}</span> <span class="s">STREQUAL</span> <span class="s2">&quot;FreeBSD&quot;</span><span class="p">)</span>
+        <span class="nb">set</span><span class="p">(</span><span class="s">cjson_obj_2</span> <span class="o">${</span><span class="nv">CMAKE_CURRENT_BINARY_DIR</span><span class="o">}</span><span class="s">/CMakeFiles/cjson_objs.dir/lua_cjson.c.o</span><span class="p">)</span>
+        <span class="nb">set</span><span class="p">(</span><span class="s">dtrace_obj</span> <span class="o">${</span><span class="nv">CMAKE_CURRENT_BINARY_DIR</span><span class="o">}</span><span class="s">/dtrace.o</span><span class="p">)</span>
+        <span class="nb">add_custom_command</span><span class="p">(</span><span class="s">OUTPUT</span> <span class="o">${</span><span class="nv">dtrace_obj</span><span class="o">}</span>
+            <span class="s">COMMAND</span> <span class="o">${</span><span class="nv">DTRACE</span><span class="o">}</span> <span class="s">-G</span> <span class="s">-s</span> <span class="o">${</span><span class="nv">D_FILE</span><span class="o">}</span><span class="s">.d</span> <span class="s">-o</span> <span class="o">${</span><span class="nv">dtrace_obj</span><span class="o">}</span> <span class="o">${</span><span class="nv">cjson_obj_2</span><span class="o">}</span>
+            <span class="s">DEPENDS</span> <span class="o">${</span><span class="nv">cjson_obj_2</span><span class="o">}</span>
+        <span class="p">)</span>
+        <span class="nb">set_source_files_properties</span><span class="p">(</span><span class="o">${</span><span class="nv">dtrace_obj</span><span class="o">}</span>
+            <span class="s">PROPERTIES</span>
+            <span class="s">EXTERNAL_OBJECT</span> <span class="s">true</span>
+            <span class="s">GENERATED</span> <span class="s">true</span>
+        <span class="p">)</span>
+        <span class="nb">set</span><span class="p">(</span><span class="s">cjson_obj</span> <span class="o">${</span><span class="nv">cjson_obj</span><span class="o">}</span> <span class="o">${</span><span class="nv">dtrace_obj</span><span class="o">}</span><span class="p">)</span>
+        <span class="nb">unset</span><span class="p">(</span><span class="s">cjson_obj_2</span><span class="p">)</span>
+        <span class="nb">unset</span><span class="p">(</span><span class="s">dtrace_obj</span><span class="p">)</span>
+        <span class="nb">unset</span><span class="p">(</span><span class="s">D_FILE</span><span class="p">)</span>
+    <span class="nb">endif</span><span class="p">()</span>
+<span class="nb">endif</span><span class="p">()</span>
+
+<span class="nb">add_library</span><span class="p">(</span><span class="s">cjson</span> <span class="s">MODULE</span> <span class="o">${</span><span class="nv">cjson_obj</span><span class="o">}</span><span class="p">)</span>
+<span class="nb">set_target_properties</span><span class="p">(</span><span class="s">cjson</span> <span class="s">PROPERTIES</span> <span class="s">PREFIX</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+<span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">cjson</span> <span class="o">${</span><span class="nv">_MODULE_LINK</span><span class="o">}</span><span class="p">)</span>
+</code></pre></div>
+<h2>DTrace in tarantool</h2>
+
+<p>A pre-release of DTrace is available in <a href="http://tarantool.org" title="The Tarantool project">tarantool</a>. If you run box.cjson.encode() function, You&#39;ll able to see data for encoding and len. </p>
+
+<p>Example commands in command line tarantool client: </p>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">127.0.0.2&gt; lua box.cjson.encode({test= &#39;xzvfvzcvzx&#39;})
+---
+ - {&quot;test&quot;:&quot;xzvfvzcvzx&quot;}
+...
+127.0.0.2&gt; lua box.cjson.encode({test= &#39;xzvfvzcvzx&#39;})
+---
+ - {&quot;test&quot;:&quot;xzvfvzcvzx&quot;}
+...
+127.0.0.2&gt; lua box.cjson.encode({test= &#39;xzvfvzcvzx&#39;})
+---
+ - {&quot;test&quot;:&quot;xzvfvzcvzx&quot;}
+...
+127.0.0.2&gt; lua box.cjson.encode({test= &#39;xzvfvzsafzx&#39;})
+---
+ - {&quot;test&quot;:&quot;xzvfvzsafzx&quot;}
+...
+127.0.0.2&gt; lua box.cjson.encode({test= &#39;xx&#39;})
+---
+ - {&quot;test&quot;:&quot;xx&quot;}
+...
+127.0.0.2&gt; lua box.cjson.encode({tmasfasdf= &#39;xx&#39;})
+---
+ - {&quot;tmasfasdf&quot;:&quot;xx&quot;}
+...
+</code></pre></div>
+<p>DTrace in action:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -n <span class="s1">&#39;tarantool*:json_encode:encode-start { self-&gt;ts = timestamp; } tarantool*:json_encode:encode-done { printf(&quot;%s time: %d&quot;, copyinstr(arg1),</span>
+<span class="s1"> ((timestamp - self-&gt;ts)/1000)); }&#39;</span>
+dtrace: description <span class="s1">&#39;tarantool*:json_encode:encode-start &#39;</span> matched 4 probes
+CPU     ID                    FUNCTION:NAME
+  1  56611          json_encode:encode-done <span class="o">{</span><span class="s2">&quot;test&quot;</span>:<span class="s2">&quot;xzvfvzcvzx&quot;</span><span class="o">}</span>x<span class="s2">&quot;} time: 10</span>
+<span class="s2">  1  56611          json_encode:encode-done {&quot;</span><span class="nb">test</span><span class="s2">&quot;:&quot;</span>xzvfvzcvzx<span class="s2">&quot;}x&quot;</span><span class="o">}</span> <span class="nb">time</span>: 10
+  1  56611          json_encode:encode-done <span class="o">{</span><span class="s2">&quot;test&quot;</span>:<span class="s2">&quot;xzvfvzcvzx&quot;</span><span class="o">}</span>x<span class="s2">&quot;} time: 7</span>
+<span class="s2">  1  56611          json_encode:encode-done {&quot;</span><span class="nb">test</span><span class="s2">&quot;:&quot;</span>xzvfvzsafzx<span class="s2">&quot;}&quot;</span><span class="o">}</span> <span class="nb">time</span>: 10
+  1  56611          json_encode:encode-done <span class="o">{</span><span class="s2">&quot;test&quot;</span>:<span class="s2">&quot;xx&quot;</span><span class="o">}</span>vzsafzx<span class="s2">&quot;}&quot;</span><span class="o">}</span> <span class="nb">time</span>: 9
+  1  56611          json_encode:encode-done <span class="o">{</span><span class="s2">&quot;tmasfasdf&quot;</span>:<span class="s2">&quot;xx&quot;</span><span class="o">}</span>zx<span class="s2">&quot;}&quot;</span><span class="o">}</span> <span class="nb">time</span>: 9
+</code></pre></div>
+<p>Patched tarantool available in the repo <a href="https://github.com/tarantool/tarantool/tree/dtrace" title="DTrace in tarantool">tarantool-dtrace</a>.</p>
+
+<h2>DTrace probes at runtime</h2>
+
+<p>This is very intersting task, I found <a href="https://github.com/chrisa/libusdt" title="libusdt">libusdt</a> with <a href="https://github.com/chrisa/lua-usdt" title="lua-usdt">lua-usdt</a> bindings and tried that in <a href="https://github.com/tarantool/tarantool/tree/dtrace" title="DTrace in tarantool">tarantool-dtrace</a>. I had great result on OSX and FreeBSD but on Oracle Linux doesn&#39;t work.</p>
+
+<p>Exaple of usage:</p>
+
+<p>After you run the application you have only static providers:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -l -m tarantool_box
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+ 1578   lua54178     tarantool_box                               foo iprobe
+ 4031    ev54179     tarantool_box                            ev_run tick-start
+ 4032    ev54179     tarantool_box                            ev_run tick-stop
+ 4132    ev54178     tarantool_box                            ev_run tick-start
+ 4133    ev54178     tarantool_box                            ev_run tick-stop
+</code></pre></div>
+<p>Then connect and try to use a USDT providers at realtime:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; ~/tmp/tt-dtrace/bin/tarantool
+localhost&gt; usdt
+---
+- provider: <span class="s1">&#39;function: 0x094ca2b0&#39;</span>
+...
+localhost&gt; <span class="nv">provider</span> <span class="o">=</span> usdt.provider<span class="o">(</span><span class="s2">&quot;lua&quot;</span>, <span class="s2">&quot;tarantool_box&quot;</span><span class="o">)</span>
+---
+...
+localhost&gt; <span class="nv">iprobe</span> <span class="o">=</span> provider:probe<span class="o">(</span><span class="s2">&quot;foo&quot;</span>, <span class="s2">&quot;iprobe&quot;</span>, <span class="s2">&quot;int&quot;</span><span class="o">)</span>
+---
+...
+localhost&gt; provider:enable<span class="o">()</span>
+---
+...
+</code></pre></div>
+<p>If you run DTrace you&#39;ll see available probes at realtime:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -n <span class="s1">&#39;lua*:tarantool_box:foo:iprobe { printf(&quot;%d&quot;, arg0)}&#39;</span>
+dtrace: description <span class="s1">&#39;lua*:tarantool_box:foo:iprobe &#39;</span> matched 1 probe
+</code></pre></div>
+<p>Time to fire!</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">localhost&gt; iprobe:fire<span class="o">(</span>1<span class="o">)</span>
+---
+...
+localhost&gt; iprobe:fire<span class="o">(</span>2<span class="o">)</span>
+---
+...
+localhost&gt; iprobe:fire<span class="o">(</span>4<span class="o">)</span>
+---
+...
+localhost&gt; iprobe:fire<span class="o">(</span>200<span class="o">)</span>
+---
+...
+localhost&gt;
+</code></pre></div>
+<p>You must see probes at realtime:</p>
+<div class="highlight"><pre><code class="sh language-sh" data-lang="sh">%&gt; sudo dtrace -n <span class="s1">&#39;lua*:tarantool_box:foo:iprobe { printf(&quot;%d&quot;, arg0)}&#39;</span>
+dtrace: description <span class="s1">&#39;lua*:tarantool_box:foo:iprobe &#39;</span> matched 1 probe
+CPU     ID                    FUNCTION:NAME
+  1   1578                       foo:iprobe 1
+  0   1578                       foo:iprobe 2
+  1   1578                       foo:iprobe 4
+  1   1578                       foo:iprobe 200
+</code></pre></div>
+<p>Unfortunately doesn&#39;t work on Oracle Linux. Also FreeBSD have a bug with USDT probes where probes more than 5 arguments.</p>
+
+<h2>DTrace on FreeBSD</h2>
+
+<p>DTrace has a lot of bugs but it works with some limits.</p>
+
+<p>Bug list:</p>
+
+<ul>
+<li>Wildcard bug</li>
+<li>USDT at runtime works only with probes with arguments less than 5</li>
+<li>USDT depended by base src because need <code>dtrace.h</code> although It exists on OSX and Oracle Linux</li>
+<li>Bug with providers position in D file with multi link dtrace objects</li>
+<li>Bug with not used probes when all providers unavailable if doesn&#39;t use in code</li>
+</ul>
+
+<h2>DTrace on Oracle Linux</h2>
+
+<p>DTrace on <a href="http://linux.oracle.com/RELEASE-NOTES-UEK3-BETA-en.html" title="Oracle Linux UEK3">Oracle Linux</a> doesn&#39;t work well. I found a few bugs similar as on FreeBSD.</p>
+
+<p>Bug list:</p>
+
+<ul>
+<li>USDT doesn&#39;t work</li>
+<li>Bug with providers position in D file with multi link dtrace objects</li>
+<li>Bug with not used probes when all providers unavailable if doesn&#39;t use in code</li>
+</ul>
+
+<h2>DTrace on OSX</h2>
+
+<p>Bug list:</p>
+
+<ul>
+<li>Not found</li>
+</ul>
+
+<h2>Conclusions</h2>
+
+<p>The best platform for DTrace is OSX now. </p>
+
+<p>DTrace on OSX more convenient than FreeBSD/Linux/Solaris because it has a modified toolchain. You need only use:</p>
+
+<p><code>dtrace -h -s file.d -o header.h</code></p>
+
+<p>And then include <code>header.h</code> in C code and compile binary file. </p>
+
+<h2>Thanks to</h2>
+
+<ul>
+<li><a href="http://blog.eitanadler.com" title="Eitan Adler&#39;s blog">Eitan Adler</a>, He corrected mistakes in English.</li>
+<li>Mark Johnston (markj@), He helped with various troubles in DTrace.</li>
+</ul>
+
+</article>
+
+
+
+<!-- DISQUS -->
+<div id="disqus_thread"></div>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+
+    <ul id="bottom-navigation" class="navbar">
+      
+        <li><a href="/archives/2015.html">2015</a></li>
+      
+        <li><a href="/archives/2013.html">2013</a></li>
+      
+        <li><a href="/archives/2011.html">2011</a></li>
+      
+        <li><a href="/archives/2010.html">2010</a></li>
+      
+        <li><a href="/archives/2009.html">2009</a></li>
+      
+    </ul>
+
+    <footer id="footer" role="contentinfo">
+      kindly generated by <a href="https://github.com/mojombo/jekyll">Jekyll</a>
+      with patches by <a href="http://ixti.net">ixti</a>
+      ~
+      and <a href="http://www.vim.org/">Vim</a>
+      ~
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </footer>
+
+    <script async src="/assets/app-7475907271d9c131a242578545901c4d.js"></script>
+  </body>
+</html>
