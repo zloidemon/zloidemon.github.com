@@ -1,6 +1,6 @@
 ---
 layout:    post
-title:     Quick introduction in Tarantool
+title:     Quick introduction to Tarantool
 tags:      [ tarantool, FreeBSD ]
 ---
 
