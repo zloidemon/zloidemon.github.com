@@ -9,7 +9,7 @@ SCRIPTS := ${BUILD}/posts.py ${BUILD}/index.py ${BUILD}/archives.py ${BUILD}/tag
 
 ASSETS_DIR := assets/posts
 
-all: posts archives tags index atom assets assets-posts 404
+all: posts archives tags index atom cname assets assets-posts 404
 
 posts: ${SCRIPTS} ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
 	python3 ${BUILD}/posts.py \
@@ -51,11 +51,13 @@ atom: ${SCRIPTS}
 	  --url http://${SITE_URL} \
 	  --title "${SITE_TITLE}"
 
+cname:
+	printf '%s\n' '${SITE_URL}' > ${OUTPUT}/CNAME
+
 assets:
 	mkdir -p ${OUTPUT}/assets/css
 	cp assets/css/milligram.min.css ${OUTPUT}/assets/css/
 	cp assets/css/custom.css ${OUTPUT}/assets/css/
-	cp CNAME ${OUTPUT}/
 
 assets-posts:
 	mkdir -p ${OUTPUT}/assets/posts
@@ -81,4 +83,4 @@ deploy: all
 	git remote add origin git@github.com:zloidemon/zloidemon.github.com.git && \
 	git push origin master --force
 
-.PHONY: all posts archives tags index atom assets assets-posts 404 clean deploy serve test
+.PHONY: all posts archives tags index atom cname assets assets-posts 404 clean deploy serve test
