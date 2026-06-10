@@ -6,25 +6,26 @@ tags:      [ tarantool, FreeBSD ]
 
 Let's start to install [tarantool] on FreeBSD 10.X from ports tree.
 
-<script type="text/javascript" src="https://asciinema.org/a/3ns6vx5sijzqk4jggvkbdgdgf.js" id="asciicast-3ns6vx5sijzqk4jggvkbdgdgf" async></script>
+[![asciicast](https://asciinema.org/a/3ns6vx5sijzqk4jggvkbdgdgf.png)](https://asciinema.org/a/3ns6vx5sijzqk4jggvkbdgdgf)
 
 Getting started
 
-<script type="text/javascript" src="https://asciinema.org/a/25723.js" id="asciicast-25723" async></script>
+[![asciicast](https://asciinema.org/a/25723.png)](https://asciinema.org/a/25723)
 
 Access to console
 
-<script type="text/javascript" src="https://asciinema.org/a/25724.js" id="asciicast-25724" async></script>
+[![asciicast](https://asciinema.org/a/25724.png)](https://asciinema.org/a/25724)
 
 Connection between tarantools
 
-<script type="text/javascript" src="https://asciinema.org/a/25725.js" id="asciicast-25725" async></script>
+[![asciicast](https://asciinema.org/a/25725.png)](https://asciinema.org/a/25725)
 
 Change delimiter
-<script type="text/javascript" src="https://asciinema.org/a/25727.js" id="asciicast-25727" async></script>
 
-Python3 asycnio driver
+[![asciicast](https://asciinema.org/a/25727.png)](https://asciinema.org/a/25727)
 
-<script type="text/javascript" src="https://asciinema.org/a/25733.js" id="asciicast-25733" async></script>
+Python3 asyncio driver
+
+[![asciicast](https://asciinema.org/a/25733.png)](https://asciinema.org/a/25733)
 
 [tarantool]:        http://tarantool.org "The Tarantool project"

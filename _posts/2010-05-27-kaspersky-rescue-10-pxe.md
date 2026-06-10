@@ -72,4 +72,3 @@ Example config pxe:
 
 [1]: http://storage.zlonet.ru/kav/20140106/rescue
 [2]: http://storage.zlonet.ru/kav/20140106/rescue.igz
-
