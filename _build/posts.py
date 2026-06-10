@@ -60,6 +60,38 @@ def fmt_date(year, month, day):
     return f"{day} {MONTHS[month - 1]} {year}"
 
 
+ASSET_RE = re.compile(r'\{%\s*asset\s+(\S+)\s*%\}')
+
+def resolve_asset_tags(body, assets_dir):
+    found = []
+    def replacer(m):
+        path = m.group(1)
+        fpath = os.path.join(assets_dir, path)
+        if os.path.isfile(fpath):
+            found.append(path)
+            with open(fpath, 'r', encoding='utf-8') as f:
+                return f.read().rstrip('\n')
+        print(f"  WARNING: asset not found: {path}", file=sys.stderr)
+        return m.group(0)
+    new_body = ASSET_RE.sub(replacer, body)
+    return new_body, found
+
+
+def build_downloads_html(assets, site_url):
+    if not assets:
+        return ''
+    items = ''.join(
+        f'<li><a href="{site_url}/assets/posts/{a}">{a.split("/")[-1]}</a></li>'
+        for a in sorted(set(assets))
+    )
+    return (
+        '<section class="downloads">'
+        '<h2>Downloadable bits</h2>'
+        f'<ul>{items}</ul>'
+        '</section>'
+    )
+
+
 def build_tag_html(tags, site_url):
     if not tags:
         return ''
@@ -111,7 +143,8 @@ def run_m4(defines, template_path):
         os.unlink(m4_path)
 
 
-def process_posts(posts_dir, layouts_dir, output_dir, site_url, site_title):
+def process_posts(posts_dir, layouts_dir, output_dir, site_url, site_title, assets_dir):
+    assets_dir_abs = os.path.abspath(assets_dir) if assets_dir else None
     posts_data = []
     posts_dir_abs = os.path.abspath(posts_dir)
     layouts_dir_abs = os.path.abspath(layouts_dir)
@@ -156,8 +189,20 @@ def process_posts(posts_dir, layouts_dir, output_dir, site_url, site_title):
         os.makedirs(out_dir, exist_ok=True)
         out_file = os.path.join(out_dir, 'index.html')
 
+        # Resolve {% asset %} tags before markdown conversion
+        asset_files = []
+        if assets_dir_abs:
+            body, asset_files = resolve_asset_tags(body, assets_dir_abs)
+            excerpt, _ = resolve_asset_tags(excerpt, assets_dir_abs)
+
         # Body HTML via lowdown
         body_html = run_lowdown(body)
+
+        # Append download links for assets
+        downloads_html = build_downloads_html(asset_files, site_url)
+        if downloads_html:
+            body_html += '\n' + downloads_html
+
         excerpt_html = run_lowdown(excerpt)
 
         # Tag links HTML
@@ -216,10 +261,11 @@ def main():
     parser.add_argument('--output', required=True)
     parser.add_argument('--url', required=True)
     parser.add_argument('--title', required=True)
+    parser.add_argument('--assets-dir', default='assets/posts')
     args = parser.parse_args()
 
     posts_data = process_posts(args.posts, args.layouts, args.output,
-                               args.url, args.title)
+                               args.url, args.title, args.assets_dir)
 
     data_dir = os.path.join(os.path.dirname(args.output), '_data')
     os.makedirs(data_dir, exist_ok=True)

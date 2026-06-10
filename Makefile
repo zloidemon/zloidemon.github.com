@@ -7,7 +7,9 @@ OUTPUT  := _site
 
 SCRIPTS := ${BUILD}/posts.py ${BUILD}/index.py ${BUILD}/archives.py ${BUILD}/tags.py ${BUILD}/atom.py
 
-all: posts archives tags index atom assets 404
+ASSETS_DIR := assets/posts
+
+all: posts archives tags index atom assets assets-posts 404
 
 posts: ${SCRIPTS} ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
 	python3 ${BUILD}/posts.py \
@@ -15,7 +17,8 @@ posts: ${SCRIPTS} ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
 	  --layouts ${LAYOUTS} \
 	  --output ${OUTPUT} \
 	  --url http://${SITE_URL} \
-	  --title "${SITE_TITLE}"
+	  --title "${SITE_TITLE}" \
+	  --assets-dir ${ASSETS_DIR}
 
 archives: ${SCRIPTS} ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4
 	python3 ${BUILD}/archives.py \
@@ -54,11 +57,15 @@ assets:
 	cp assets/css/custom.css ${OUTPUT}/assets/css/
 	cp CNAME ${OUTPUT}/
 
+assets-posts:
+	mkdir -p ${OUTPUT}/assets/posts
+	cp -r ${ASSETS_DIR}/* ${OUTPUT}/assets/posts/
+
 404:
 	cp 404.html ${OUTPUT}/
 
 clean:
-	rm -rf ${OUTPUT}/*
+	rm -rf ${OUTPUT}/* _data
 
 serve: all
 	@echo "Serving at http://localhost:8000"
@@ -74,4 +81,4 @@ deploy: all
 	git remote add origin git@github.com:zloidemon/zloidemon.github.com.git && \
 	git push origin master --force
 
-.PHONY: all posts archives tags index atom assets 404 clean deploy serve test
+.PHONY: all posts archives tags index atom assets assets-posts 404 clean deploy serve test
