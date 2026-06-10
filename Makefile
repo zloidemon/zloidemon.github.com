@@ -80,7 +80,7 @@ deploy: all
 	git init && \
 	git add . && \
 	git commit -m "Site updated at ${.TARGET}" && \
-	git remote add origin git@github.com:zloidemon/zloidemon.github.com.git && \
+	git remote add origin ${SITE_REPO} && \
 	git push origin master --force
 
 .PHONY: all posts archives tags index atom cname assets assets-posts 404 clean deploy serve test
