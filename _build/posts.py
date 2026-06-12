@@ -51,9 +51,16 @@ def slugify(title):
     return s
 
 
+REF_RE = re.compile(r'^\[([^\]]+)\]:\s+\S+.*$', re.MULTILINE)
+
 def extract_excerpt(body):
     parts = re.split(r'\n\n+', body, maxsplit=1)
-    return parts[0].strip()
+    excerpt = parts[0].strip()
+    refs = REF_RE.findall(body)
+    if refs:
+        for m in REF_RE.finditer(body):
+            excerpt += '\n' + m.group(0)
+    return excerpt
 
 
 def fmt_date(year, month, day):
