@@ -1,9 +1,12 @@
 /* Layout */
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   background: #fff;
   color: #222;
-  padding-bottom: 5.653em;
 }
+main { flex: 1; }
 
 a { color: #33c; }
 a:hover { text-shadow: 0 0 2px #99c; }
