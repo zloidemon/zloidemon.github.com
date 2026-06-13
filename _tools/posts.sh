@@ -28,10 +28,6 @@ slugify() {
     echo "$1" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//'
 }
 
-m4_escape() {
-    sed 's/\[\[/\\[[/g; s/\]\]/\\]]/g'
-}
-
 for f in "$posts_dir"/*.md; do
     [ -f "$f" ] || continue
 
@@ -98,35 +94,22 @@ ${downloads}"
 
     gen_page() {
         local content="$1"
-        local tmpm4
-        tmpm4=$(mktemp)
-        printf "changequote([[, ]])dnl\n" > "$tmpm4"
-        printf "define([[_post_title]], [[%s]])dnl\n" "$(printf '%s\n' "$_title" | m4_escape)" >> "$tmpm4"
-        printf "define([[_post_date]], [[%s]])dnl\n" "$date_fmt" >> "$tmpm4"
-        printf "define([[_post_categories]], [[]])dnl\n" >> "$tmpm4"
-        printf "define([[_post_tags]], [[%s]])dnl\n" "$(printf '%s\n' "$tag_html" | m4_escape)" >> "$tmpm4"
-        printf "define([[_post_content]], [[" >> "$tmpm4"
-        printf '%s\n' "$content" | m4_escape >> "$tmpm4"
-        printf "]])dnl\n" >> "$tmpm4"
-        printf "include([[${layouts_dir}/post.m4]])dnl\n" >> "$tmpm4"
         local post_html
-        post_html=$(m4 "$tmpm4" 2>/dev/null)
-        rm -f "$tmpm4"
+        post_html=$(m4 \
+          -D _post_title="$_title" \
+          -D _post_date="$date_fmt" \
+          -D _post_categories="" \
+          -D _post_tags="$tag_html" \
+          -D _post_content="$content" \
+          "${layouts_dir}/post.m4" 2>/dev/null)
 
-        tmpm4=$(mktemp)
-        printf "changequote([[, ]])dnl\n" > "$tmpm4"
-        printf "define([[_page_title]], [[%s * %s]])dnl\n" "$(printf '%s\n' "$_title" | m4_escape)" "$site_title" >> "$tmpm4"
-        printf "define([[_site_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
-        printf "define([[_site_repo]], [[%s]])dnl\n" "$site_repo" >> "$tmpm4"
-        printf "define([[_year_links]], [[]])dnl\n" >> "$tmpm4"
-        printf "define([[_body_content]], [[" >> "$tmpm4"
-        printf '%s\n' "$post_html" | m4_escape >> "$tmpm4"
-        printf "]])dnl\n" >> "$tmpm4"
-        printf "include([[${layouts_dir}/default.m4]])dnl\n" >> "$tmpm4"
-        local page_html
-        page_html=$(m4 "$tmpm4" 2>/dev/null)
-        rm -f "$tmpm4"
-        printf '%s\n' "$page_html"
+        m4 \
+          -D _page_title="$_title * $site_title" \
+          -D _site_title="$site_title" \
+          -D _site_repo="$site_repo" \
+          -D _year_links="" \
+          -D _body_content="$post_html" \
+          "${layouts_dir}/default.m4" 2>/dev/null
     }
 
     full_html=$(gen_page "$body_html")

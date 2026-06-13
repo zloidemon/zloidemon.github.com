@@ -16,10 +16,6 @@ if [ ! -f "$posts_file" ]; then
     exit 1
 fi
 
-m4_escape() {
-    sed 's/\[\[/\\[[/g; s/\]\]/\\]]/g'
-}
-
 # Build year links from all posts
 years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
@@ -72,19 +68,13 @@ for line in $latest; do
     done
     IFS=$OLD_IFS
 
-    tmpm4=$(mktemp)
-    printf "changequote([[, ]])dnl\n" > "$tmpm4"
-    printf "define([[_post_title]], [[%s]])dnl\n" "$(printf '%s\n' "$title" | m4_escape)" >> "$tmpm4"
-    printf "define([[_post_date]], [[%s]])dnl\n" "$date_fmt" >> "$tmpm4"
-    printf "define([[_post_categories]], [[]])dnl\n" >> "$tmpm4"
-    printf "define([[_post_tags]], [[%s]])dnl\n" "$(printf '%s\n' "$tag_html" | m4_escape)" >> "$tmpm4"
-    printf "define([[_post_content]], [[" >> "$tmpm4"
-    printf '%s\n' "$excerpt" | m4_escape >> "$tmpm4"
-    printf "<p><a href=\"${url}\">Read more&hellip;</a></p>" | m4_escape >> "$tmpm4"
-    printf "]])dnl\n" >> "$tmpm4"
-    printf "include([[${layouts_dir}/post.m4]])dnl\n" >> "$tmpm4"
-    article=$(m4 "$tmpm4" 2>/dev/null)
-    rm -f "$tmpm4"
+    article=$(m4 \
+      -D _post_title="$title" \
+      -D _post_date="$date_fmt" \
+      -D _post_categories="" \
+      -D _post_tags="$tag_html" \
+      -D _post_content="$(printf '%s\n' "$excerpt"; printf "<p><a href=\"${url}\">Read more&hellip;</a></p>")" \
+      "${layouts_dir}/post.m4" 2>/dev/null)
 
     if [ -n "$article" ]; then
         articles="${articles}${article}
@@ -93,18 +83,13 @@ for line in $latest; do
 done
 unset IFS
 
-tmpm4=$(mktemp)
-printf "changequote([[, ]])dnl\n" > "$tmpm4"
-printf "define([[_page_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
-printf "define([[_site_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
-printf "define([[_site_repo]], [[%s]])dnl\n" "$site_repo" >> "$tmpm4"
-printf "define([[_year_links]], [[%s]])dnl\n" "$year_links" >> "$tmpm4"
-printf "define([[_body_content]], [[" >> "$tmpm4"
-printf '%s\n' "$articles" | m4_escape >> "$tmpm4"
-printf "]])dnl\n" >> "$tmpm4"
-printf "include([[${layouts_dir}/default.m4]])dnl\n" >> "$tmpm4"
-result=$(m4 "$tmpm4" 2>/dev/null)
-rm -f "$tmpm4"
+result=$(m4 \
+  -D _page_title="$site_title" \
+  -D _site_title="$site_title" \
+  -D _site_repo="$site_repo" \
+  -D _year_links="$year_links" \
+  -D _body_content="$articles" \
+  "${layouts_dir}/default.m4" 2>/dev/null)
 
 if [ -n "$result" ]; then
     printf '%s\n' "$result" > "${output_dir}/index.html"

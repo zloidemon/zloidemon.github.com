@@ -15,10 +15,6 @@ if [ ! -f "$posts_file" ]; then
     exit 1
 fi
 
-m4_escape() {
-    sed 's/\[\[/\\[[/g; s/\]\]/\\]]/g'
-}
-
 # Build year links
 years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
@@ -56,24 +52,18 @@ END {
             if [ -n "$entries" ]; then
                 archive_title="Archives of &laquo;${year}&raquo; year"
 
-                tmpm4=$(mktemp)
-                printf "changequote([[, ]])dnl\n" > "$tmpm4"
-                printf "define([[_archive_title]], [[%s]])dnl\n" "$archive_title" >> "$tmpm4"
-                printf "define([[_archive_entries]], [[%s]])dnl\n" "$(printf '%s\n' "$entries" | m4_escape)" >> "$tmpm4"
-                printf "include([[${layouts_dir}/archive.m4]])dnl\n" >> "$tmpm4"
-                archive_body=$(m4 "$tmpm4" 2>/dev/null)
-                rm -f "$tmpm4"
+                archive_body=$(m4 \
+                  -D _archive_title="$archive_title" \
+                  -D _archive_entries="$entries" \
+                  "${layouts_dir}/archive.m4" 2>/dev/null)
 
-                tmpm4=$(mktemp)
-                printf "changequote([[, ]])dnl\n" > "$tmpm4"
-                printf "define([[_page_title]], [[%s * %s]])dnl\n" "$archive_title" "$site_title" >> "$tmpm4"
-                printf "define([[_site_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
-                printf "define([[_site_repo]], [[%s]])dnl\n" "$site_repo" >> "$tmpm4"
-                printf "define([[_year_links]], [[%s]])dnl\n" "$year_links" >> "$tmpm4"
-                printf "define([[_body_content]], [[%s]])dnl\n" "$(printf '%s\n' "$archive_body" | m4_escape)" >> "$tmpm4"
-                printf "include([[${layouts_dir}/default.m4]])dnl\n" >> "$tmpm4"
-                page_html=$(m4 "$tmpm4" 2>/dev/null)
-                rm -f "$tmpm4"
+                page_html=$(m4 \
+                  -D _page_title="$archive_title * $site_title" \
+                  -D _site_title="$site_title" \
+                  -D _site_repo="$site_repo" \
+                  -D _year_links="$year_links" \
+                  -D _body_content="$archive_body" \
+                  "${layouts_dir}/default.m4" 2>/dev/null)
 
                 mkdir -p "${output_dir}/archives/${year}"
                 printf '%s\n' "$page_html" > "${output_dir}/archives/${year}/index.html"

@@ -23,10 +23,5 @@ if [ -f "$file" ]; then
     exit 1
 fi
 
-tmpm4=$(mktemp)
-printf "changequote([[, ]])dnl\n" > "$tmpm4"
-printf "define([[_draft_title]], [[%s]])dnl\n" "$title" >> "$tmpm4"
-printf "include([[${layouts_dir}/draft.m4]])dnl\n" >> "$tmpm4"
-m4 "$tmpm4" 2>/dev/null > "$file"
-rm -f "$tmpm4"
+m4 -D _draft_title="$title" "${layouts_dir}/draft.m4" 2>/dev/null > "$file"
 echo "$file"
