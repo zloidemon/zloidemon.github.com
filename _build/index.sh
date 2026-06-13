@@ -26,7 +26,7 @@ for y in $years; do
     if [ -n "$year_links" ]; then
         year_links="${year_links} | "
     fi
-    year_links="${year_links}<a href=\"http://${site_url}/archives/${y}\">${y}</a>"
+    year_links="${year_links}<a href=\"/archives/${y}/\">${y}</a>"
 done
 
 # Take top 3 posts by date (file is already sorted, but sort to be sure)
@@ -67,7 +67,7 @@ for line in $latest; do
         if [ -n "$tag_html" ]; then
             tag_html="${tag_html}, "
         fi
-        tag_html="${tag_html}<a href=\"http://${site_url}/tags/${tslug}\">${t}</a>"
+        tag_html="${tag_html}<a href=\"/tags/${tslug}/\">${t}</a>"
     done
     IFS=$OLD_IFS
 
@@ -79,7 +79,7 @@ for line in $latest; do
     printf "define([[_post_tags]], [[%s]])dnl\n" "$(printf '%s\n' "$tag_html" | m4_escape)" >> "$tmpm4"
     printf "define([[_post_content]], [[" >> "$tmpm4"
     printf '%s\n' "$excerpt" | m4_escape >> "$tmpm4"
-    printf "<p><a href=\"http://${site_url}${url}\">Read more&hellip;</a></p>" | m4_escape >> "$tmpm4"
+    printf "<p><a href=\"${url}\">Read more&hellip;</a></p>" | m4_escape >> "$tmpm4"
     printf "]])dnl\n" >> "$tmpm4"
     printf "include([[${layouts_dir}/post.m4]])dnl\n" >> "$tmpm4"
     article=$(m4 "$tmpm4" 2>/dev/null)

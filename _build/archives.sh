@@ -25,7 +25,7 @@ for y in $years; do
     if [ -n "$year_links" ]; then
         year_links="${year_links} | "
     fi
-    year_links="${year_links}<a href=\"http://${site_url}/archives/${y}\">${y}</a>"
+    year_links="${year_links}<a href=\"/archives/${y}/\">${y}</a>"
 done
 
 mkdir -p "${output_dir}/archives"
@@ -73,9 +73,10 @@ END {
                 page_html=$(m4 "$tmpm4" 2>/dev/null)
                 rm -f "$tmpm4"
 
-                printf '%s\n' "$page_html" > "${output_dir}/archives/${year}.html"
+                mkdir -p "${output_dir}/archives/${year}"
+                printf '%s\n' "$page_html" > "${output_dir}/archives/${year}/index.html"
                 post_count=$(echo "$entries" | grep -c '<li>')
-                printf "Generated archives/%s.html (%s posts)\n" "$year" "$post_count"
+                printf "Generated archives/%s/ (%s posts)\n" "$year" "$post_count"
             fi
             ;;
         *)
@@ -95,7 +96,7 @@ END {
                     if [ -n "$tag_html" ]; then
                         tag_html="${tag_html}, "
                     fi
-                    tag_html="${tag_html}<a href=\"http://${site_url}/tags/${tslug}\">${t}</a>"
+                    tag_html="${tag_html}<a href=\"/tags/${tslug}/\">${t}</a>"
                 done
                 IFS=$OLD_IFS
 

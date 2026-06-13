@@ -66,7 +66,7 @@ for f in "$posts_dir"/*.md; do
         items=""
         for ap in $paths; do
             aname=$(basename "$ap")
-            items="${items}<li><a href=\"http://${site_url}/assets/posts/${ap}\">Download ${aname}</a></li>
+            items="${items}<li><a href=\"/assets/posts/${ap}\">Download ${aname}</a></li>
 "
         done
         downloads="<section class=\"downloads\"><h2>Downloadable bits</h2><ul>${items}</ul></section>"
@@ -88,7 +88,7 @@ ${downloads}"
         if [ -n "$tag_html" ]; then
             tag_html="${tag_html}, "
         fi
-        tag_html="${tag_html}<a href=\"http://${site_url}/tags/${tslug}\">${t}</a>"
+        tag_html="${tag_html}<a href=\"/tags/${tslug}\">${t}</a>"
     done
     IFS=$OLD_IFS
 
