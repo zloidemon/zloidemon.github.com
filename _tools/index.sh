@@ -20,10 +20,12 @@ fi
 years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
 for y in $years; do
+    link=$(m4 -D _year="$y" "${layouts_dir}/year-link.m4" 2>/dev/null)
     if [ -n "$year_links" ]; then
-        year_links="${year_links} | "
+        year_links="${year_links} | ${link}"
+    else
+        year_links="$link"
     fi
-    year_links="${year_links}<a href=\"/archives/${y}/\">${y}</a>"
 done
 
 # Take top 3 posts by date (file is already sorted, but sort to be sure)
@@ -61,19 +63,23 @@ for line in $latest; do
         t=$(echo "$t" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
         [ -z "$t" ] && continue
         tslug=$(echo "$t" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')
+        link=$(m4 -D _tag_slug="$tslug" -D _tag_name="$t" "${layouts_dir}/tag-link.m4" 2>/dev/null)
         if [ -n "$tag_html" ]; then
-            tag_html="${tag_html}, "
+            tag_html="${tag_html}, ${link}"
+        else
+            tag_html="$link"
         fi
-        tag_html="${tag_html}<a href=\"/tags/${tslug}/\">${t}</a>"
     done
     IFS=$OLD_IFS
+
+    read_more=$(m4 -D _read_more_url="$url" "${layouts_dir}/read-more.m4" 2>/dev/null)
 
     article=$(m4 \
       -D _post_title="$title" \
       -D _post_date="$date_fmt" \
       -D _post_categories="" \
       -D _post_tags="$tag_html" \
-      -D _post_content="$(printf '%s\n' "$excerpt"; printf "<p><a href=\"${url}\">Read more&hellip;</a></p>")" \
+      -D _post_content="$(printf '%s\n' "$excerpt"; printf '%s' "$read_more")" \
       "${layouts_dir}/post.m4" 2>/dev/null)
 
     if [ -n "$article" ]; then

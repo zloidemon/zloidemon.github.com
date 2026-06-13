@@ -19,10 +19,12 @@ fi
 years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
 for y in $years; do
+    link=$(m4 -D _year="$y" "${layouts_dir}/year-link.m4" 2>/dev/null)
     if [ -n "$year_links" ]; then
-        year_links="${year_links} | "
+        year_links="${year_links} | ${link}"
+    else
+        year_links="$link"
     fi
-    year_links="${year_links}<a href=\"/archives/${y}/\">${y}</a>"
 done
 
 mkdir -p "${output_dir}/archives"
@@ -85,14 +87,21 @@ END {
                     t=$(echo "$t" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
                     [ -z "$t" ] && continue
                     tslug=$(echo "$t" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g; s/--*/-/g; s/^-//; s/-$//')
+                    link=$(m4 -D _tag_slug="$tslug" -D _tag_name="$t" "${layouts_dir}/tag-link.m4" 2>/dev/null)
                     if [ -n "$tag_html" ]; then
-                        tag_html="${tag_html}, "
+                        tag_html="${tag_html}, ${link}"
+                    else
+                        tag_html="$link"
                     fi
-                    tag_html="${tag_html}<a href=\"/tags/${tslug}/\">${t}</a>"
                 done
                 IFS=$OLD_IFS
 
-                entry="<li><a href=\"${url}\">${title}</a><ul class=\"post-info\"><li>Date: ${date_fmt}</li><li>Tagged with: ${tag_html}</li></ul></li>"
+                entry=$(m4 \
+                  -D _entry_url="$url" \
+                  -D _entry_title="$title" \
+                  -D _entry_date="$date_fmt" \
+                  -D _entry_tags="$tag_html" \
+                  "${layouts_dir}/entry.m4" 2>/dev/null)
                 entries="${entries}${entry}
 "
             fi

@@ -63,10 +63,11 @@ for f in "$posts_dir"/*.md; do
         items=""
         for ap in $paths; do
             aname=$(basename "$ap")
-            items="${items}<li><a href=\"/assets/posts/${ap}\">Download ${aname}</a></li>
+            item=$(m4 -D _download_path="$ap" -D _download_name="$aname" "${layouts_dir}/download-item.m4" 2>/dev/null)
+            items="${items}${item}
 "
         done
-        downloads="<section class=\"downloads\"><h2>Downloadable bits</h2><ul>${items}</ul></section>"
+        downloads=$(m4 -D _download_items="$(printf '%s\n' "$items")" "${layouts_dir}/downloads.m4" 2>/dev/null)
     fi
     rm -f "$alist"
 
@@ -82,10 +83,12 @@ ${downloads}"
         t=$(echo "$t" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//')
         [ -z "$t" ] && continue
         tslug=$(slugify "$t")
+        link=$(m4 -D _tag_slug="$tslug" -D _tag_name="$t" "${layouts_dir}/tag-link.m4" 2>/dev/null)
         if [ -n "$tag_html" ]; then
-            tag_html="${tag_html}, "
+            tag_html="${tag_html}, ${link}"
+        else
+            tag_html="$link"
         fi
-        tag_html="${tag_html}<a href=\"/tags/${tslug}\">${t}</a>"
     done
     IFS=$OLD_IFS
 
