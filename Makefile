@@ -5,51 +5,50 @@ LAYOUTS := _layouts
 POSTS   := _posts
 OUTPUT  := _site
 
-SCRIPTS := ${BUILD}/posts.py ${BUILD}/index.py ${BUILD}/archives.py ${BUILD}/tags.py ${BUILD}/atom.py
-
 ASSETS_DIR := assets/posts
 
 all: posts archives tags index atom cname assets assets-posts 404
 
-posts: ${SCRIPTS} ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
-	python3 ${BUILD}/posts.py \
-	  --posts ${POSTS} \
-	  --layouts ${LAYOUTS} \
-	  --output ${OUTPUT} \
-	  --url http://${SITE_URL} \
-	  --title "${SITE_TITLE}" \
-	  --assets-dir ${ASSETS_DIR}
+posts: ${BUILD}/posts.sh ${BUILD}/frontmatter.awk ${BUILD}/resolve-assets.awk ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
+	sh ${BUILD}/posts.sh \
+	  ${POSTS} \
+	  ${LAYOUTS} \
+	  ${OUTPUT} \
+	  ${SITE_URL} \
+	  "${SITE_TITLE}" \
+	  ${ASSETS_DIR}
 
-archives: ${SCRIPTS} ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4
-	python3 ${BUILD}/archives.py \
-	  --data _data/posts.json \
-	  --layouts ${LAYOUTS} \
-	  --output ${OUTPUT} \
-	  --url http://${SITE_URL} \
-	  --title "${SITE_TITLE}"
+archives: ${BUILD}/archives.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 _data/posts.txt
+	sh ${BUILD}/archives.sh \
+	  _data \
+	  ${LAYOUTS} \
+	  ${OUTPUT} \
+	  ${SITE_URL} \
+	  "${SITE_TITLE}"
 
-tags: ${SCRIPTS} ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4
-	python3 ${BUILD}/tags.py \
-	  --data _data/posts.json \
-	  --layouts ${LAYOUTS} \
-	  --output ${OUTPUT} \
-	  --url http://${SITE_URL} \
-	  --title "${SITE_TITLE}"
+tags: ${BUILD}/tags.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 _data/posts.txt
+	sh ${BUILD}/tags.sh \
+	  _data \
+	  ${LAYOUTS} \
+	  ${OUTPUT} \
+	  ${SITE_URL} \
+	  "${SITE_TITLE}"
 
-index: ${SCRIPTS} ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4
-	python3 ${BUILD}/index.py \
-	  --data _data/posts.json \
-	  --layouts ${LAYOUTS} \
-	  --output ${OUTPUT} \
-	  --url http://${SITE_URL} \
-	  --title "${SITE_TITLE}"
+index: ${BUILD}/index.sh ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4 _data/posts.txt
+	sh ${BUILD}/index.sh \
+	  _data \
+	  ${LAYOUTS} \
+	  ${OUTPUT} \
+	  ${SITE_URL} \
+	  "${SITE_TITLE}"
 
-atom: ${SCRIPTS}
-	python3 ${BUILD}/atom.py \
-	  --data _data/posts.json \
-	  --output ${OUTPUT} \
-	  --url http://${SITE_URL} \
-	  --title "${SITE_TITLE}"
+atom: ${BUILD}/atom.sh _data/posts.txt
+	sh ${BUILD}/atom.sh \
+	  _data \
+	  ${OUTPUT} \
+	  ${SITE_URL} \
+	  "${SITE_TITLE}" \
+	  ${LAYOUTS}
 
 cname:
 	printf '%s\n' '${SITE_URL}' > ${OUTPUT}/CNAME
@@ -65,6 +64,15 @@ assets-posts:
 
 404:
 	cp 404.html ${OUTPUT}/
+
+_data/posts.txt: ${BUILD}/posts.sh
+	sh ${BUILD}/posts.sh \
+	  ${POSTS} \
+	  ${LAYOUTS} \
+	  ${OUTPUT} \
+	  ${SITE_URL} \
+	  "${SITE_TITLE}" \
+	  ${ASSETS_DIR}
 
 clean:
 	rm -rf ${OUTPUT}/* _data
