@@ -17,7 +17,7 @@ if [ ! -f "$posts_file" ]; then
 fi
 
 # Build year links from all posts
-years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
+years=$(${AWK:-awk} -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
 for y in $years; do
     link=$(m4 -D _year="$y" "${layouts_dir}/year-link.m4" 2>/dev/null)
@@ -46,7 +46,7 @@ for line in $latest; do
     post_file="${output_dir}${url}index.html"
     excerpt=""
     if [ -f "$post_file" ]; then
-        excerpt=$(awk '
+        excerpt=$(${AWK:-awk} '
             /<\/header>/ { in_body = 1; next }
             in_body && /^[[:space:]]*<p[ >]/ { collecting = 1 }
             collecting { print }

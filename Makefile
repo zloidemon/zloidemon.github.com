@@ -1,4 +1,5 @@
 .include "config.mk"
+.export AWK
 
 BUILD   := _tools
 LAYOUTS := _layouts

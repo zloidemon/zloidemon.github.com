@@ -39,7 +39,7 @@ for f in "$posts_dir"/*.md; do
     date_iso="${year}-${month}-${day}"
     date_fmt="$day $(month_name "$month") $year"
 
-    eval "$(awk -f "${build_dir}/frontmatter.awk" "$f")"
+    eval "$(${AWK:-awk} -f "${build_dir}/frontmatter.awk" "$f")"
 
     if [ -n "$_permalink" ]; then
         url_path=$(echo "$_permalink" | sed 's|^/||')
@@ -49,11 +49,11 @@ for f in "$posts_dir"/*.md; do
 
     printf '  %s -> /%s/\n' "$fname" "$url_path"
 
-    body=$(awk 'BEGIN{s=0} s<2&&/^---$/{s++;next} s==1{next} {print}' "$f")
+    body=$(${AWK:-awk} 'BEGIN{s=0} s<2&&/^---$/{s++;next} s==1{next} {print}' "$f")
 
     alist=$(mktemp)
     : > "$alist"
-    resolved=$(printf '%s\n' "$body" | awk -v assets_root="$assets_dir" -v list_file="$alist" -f "${build_dir}/resolve-assets.awk")
+    resolved=$(printf '%s\n' "$body" | ${AWK:-awk} -v assets_root="$assets_dir" -v list_file="$alist" -f "${build_dir}/resolve-assets.awk")
 
     body_html=$(printf '%s\n' "$resolved" | lowdown -thtml 2>/dev/null)
 
@@ -92,7 +92,7 @@ ${downloads}"
     done
     IFS=$OLD_IFS
 
-    excerpt=$(printf '%s\n' "$resolved" | awk 'BEGIN{RS="";ORS="\n\n"} {print; exit}')
+    excerpt=$(printf '%s\n' "$resolved" | ${AWK:-awk} 'BEGIN{RS="";ORS="\n\n"} {print; exit}')
     excerpt_html=$(printf '%s\n' "$excerpt" | lowdown -thtml 2>/dev/null)
 
     gen_page() {

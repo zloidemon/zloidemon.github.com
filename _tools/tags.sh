@@ -20,7 +20,7 @@ slugify() {
 }
 
 # Build year links
-years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
+years=$(${AWK:-awk} -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
 for y in $years; do
     link=$(m4 -D _year="$y" "${layouts_dir}/year-link.m4" 2>/dev/null)
@@ -34,7 +34,7 @@ done
 mkdir -p "${output_dir}/tags"
 
 # Build tag→posts map with awk
-awk -F'\t' '
+${AWK:-awk} -F'\t' '
 function slugify(s) {
     gsub(/[^a-zA-Z0-9]/, "-", s)
     gsub(/--+/, "-", s)

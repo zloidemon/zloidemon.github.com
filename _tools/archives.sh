@@ -16,7 +16,7 @@ if [ ! -f "$posts_file" ]; then
 fi
 
 # Build year links
-years=$(awk -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
+years=$(${AWK:-awk} -F'\t' '{print substr($1,1,4)}' "$posts_file" | sort -ru)
 year_links=""
 for y in $years; do
     link=$(m4 -D _year="$y" "${layouts_dir}/year-link.m4" 2>/dev/null)
@@ -30,7 +30,7 @@ done
 mkdir -p "${output_dir}/archives"
 
 # Group posts by year using awk
-awk -F'\t' '
+${AWK:-awk} -F'\t' '
 {
     year = substr($1, 1, 4)
     count[year]++
