@@ -7,6 +7,16 @@ OUTPUT  := _site
 
 ASSETS_DIR := assets/posts
 
+help:
+	@echo "Usage: $(MAKE) <target>"
+	@echo ""
+	@echo "Targets:"
+	@echo "  all       Full build (posts, archives, tags, index, atom, cname, assets, 404)"
+	@echo "  serve     Build and serve at http://localhost:8000"
+	@echo "  deploy    Build and deploy to GitHub Pages"
+	@echo "  draft     Create a new post (usage: $(MAKE) draft TITLE=\"Post Title\")"
+	@echo "  clean     Remove _site/ and _data/"
+
 all: posts archives tags index atom cname assets assets-posts 404
 
 posts: ${BUILD}/posts.sh ${BUILD}/frontmatter.awk ${BUILD}/resolve-assets.awk ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
@@ -65,6 +75,9 @@ assets-posts:
 404:
 	cp 404.html ${OUTPUT}/
 
+draft:
+	${BUILD}/draft.sh "${TITLE}" "${POSTS}" "${LAYOUTS}"
+
 _data/posts.txt: ${BUILD}/posts.sh
 	sh ${BUILD}/posts.sh \
 	  ${POSTS} \
@@ -91,4 +104,4 @@ deploy: all
 	git remote add origin ${SITE_REPO} && \
 	git push origin master --force
 
-.PHONY: all posts archives tags index atom cname assets assets-posts 404 clean deploy serve test
+.PHONY: help all posts archives tags index atom cname assets assets-posts 404 clean serve test draft deploy
