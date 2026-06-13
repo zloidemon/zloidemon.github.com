@@ -46,12 +46,7 @@ for line in $latest; do
     post_file="${output_dir}${url}index.html"
     excerpt=""
     if [ -f "$post_file" ]; then
-        excerpt=$(${AWK:-awk} '
-            /<\/header>/ { in_body = 1; next }
-            in_body && /^[[:space:]]*<p[ >]/ { collecting = 1 }
-            collecting { print }
-            collecting && /<\/p>/ { exit }
-        ' "$post_file")
+        excerpt=$(${AWK:-awk} -f "${build_dir}/extract-excerpt.awk" "$post_file")
     fi
     [ -z "$excerpt" ] && excerpt="<p>Read the full post for details.</p>"
 

@@ -5,7 +5,10 @@ output_dir="$2"
 site_url="$3"
 site_title="$4"
 layouts_dir="$5"
+site_author="$6"
+site_email="$7"
 
+build_dir=$(dirname "$0")
 posts_file="${data_dir}/posts.txt"
 
 if [ ! -f "$posts_file" ]; then
@@ -25,19 +28,7 @@ now=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
 
 latest=$(sort -t"$(printf '\t')" -k1,1r "$posts_file" | head -10)
 
-{
-cat <<EOF
-<?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom">
-  <title>$(printf '%s' "$site_title" | xml_escape)</title>
-  <id>http://${site_url}/</id>
-  <updated>${now}</updated>
-  <author>
-    <name>Veniamin Gvozdikov</name>
-    <email>vg@FreeBSD.org</email>
-  </author>
-EOF
-
+entries=""
 IFS='
 '
 for line in $latest; do
@@ -58,12 +49,7 @@ for line in $latest; do
     # Extract excerpt (first <p> after header)
     excerpt=""
     if [ -f "$post_file" ]; then
-        excerpt=$(${AWK:-awk} '
-            /<\/header>/ { in_body = 1; next }
-            in_body && /^[[:space:]]*<p[ >]/ { collecting = 1 }
-            collecting { print }
-            collecting && /<\/p>/ { exit }
-        ' "$post_file")
+        excerpt=$(${AWK:-awk} -f "${build_dir}/extract-excerpt.awk" "$post_file")
     fi
     [ -z "$excerpt" ] && excerpt="<p>Read the full post for details.</p>"
 
@@ -74,20 +60,20 @@ for line in $latest; do
     excerpt_esc=$(printf '%s' "$excerpt" | xml_escape)
     body_esc=$(printf '%s' "$body" | xml_escape)
 
-    cat <<ENTRY
-  <entry>
-    <title>${post_title}</title>
-    <link href="${link}"/>
-    <id>${post_id}</id>
-    <updated>${updated}</updated>
-    <summary type="html">${excerpt_esc}</summary>
-    <content type="html">${body_esc}</content>
-  </entry>
-ENTRY
+    entry=$(printf '  <entry>\n    <title>%s</title>\n    <link href="%s"/>\n    <id>%s</id>\n    <updated>%s</updated>\n    <summary type="html">%s</summary>\n    <content type="html">%s</content>\n  </entry>\n' \
+      "$post_title" "$link" "$post_id" "$updated" "$excerpt_esc" "$body_esc")
+    entries="${entries}${entry}"
 done
 unset IFS
 
-echo '</feed>'
-} > "${output_dir}/atom.xml"
+feed_title=$(printf '%s' "$site_title" | xml_escape)
+m4 \
+  -D _feed_title="$feed_title" \
+  -D _feed_url="$site_url" \
+  -D _feed_updated="$now" \
+  -D _feed_author="$site_author" \
+  -D _feed_email="$site_email" \
+  -D _feed_entries="$entries" \
+  "${layouts_dir}/atom.m4" 2>/dev/null > "${output_dir}/atom.xml"
 
 echo "Generated atom.xml ($(echo "$latest" | grep -c .) entries)"

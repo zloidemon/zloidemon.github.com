@@ -30,21 +30,7 @@ done
 mkdir -p "${output_dir}/archives"
 
 # Group posts by year using awk
-${AWK:-awk} -F'\t' '
-{
-    year = substr($1, 1, 4)
-    count[year]++
-    posts[year, count[year]] = $0
-}
-END {
-    for (year in count) {
-        print "YEAR:" year
-        for (i = 1; i <= count[year]; i++)
-            print posts[year, i]
-        print "ENDYEAR"
-    }
-}
-' "$posts_file" | while read marker; do
+${AWK:-awk} -f "${build_dir}/group-by-year.awk" "$posts_file" | while read marker; do
     case $marker in
         YEAR:*)
             year=$(echo "$marker" | sed 's/^YEAR://')

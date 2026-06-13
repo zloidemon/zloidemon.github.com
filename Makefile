@@ -59,13 +59,15 @@ index: ${BUILD}/index.sh ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.
 	  "${SITE_TITLE}" \
 	  ${SITE_REPO_HTTP}
 
-atom: ${BUILD}/atom.sh ${DATA}/posts.txt
+atom: ${BUILD}/atom.sh ${DATA}/posts.txt ${LAYOUTS}/atom.m4
 	sh ${BUILD}/atom.sh \
 	  ${DATA} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}" \
-	  ${LAYOUTS}
+	  ${LAYOUTS} \
+	  "${SITE_AUTHOR}" \
+	  "${SITE_EMAIL}"
 
 cname:
 	printf '%s\n' '${SITE_URL}' > ${OUTPUT}/CNAME
