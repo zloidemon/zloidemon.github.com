@@ -12,7 +12,8 @@
     <nav class="navbar">
       <section class="container">
         <ul class="navbar-left">
-          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+          <li><a href="/">Blog</a></li>
+          <li><a href="_site_repo">Sources</a></li>
         </ul>
         <ul class="navbar-right">
           <li><a href="https://github.com/zloidemon">GitHub</a></li>

@@ -5,6 +5,7 @@ layouts_dir="$2"
 output_dir="$3"
 site_url="$4"
 site_title="$5"
+site_repo="$6"
 
 build_dir=$(dirname "$0")
 posts_file="${data_dir}/posts.txt"
@@ -67,6 +68,7 @@ END {
                 printf "changequote([[, ]])dnl\n" > "$tmpm4"
                 printf "define([[_page_title]], [[%s * %s]])dnl\n" "$archive_title" "$site_title" >> "$tmpm4"
                 printf "define([[_site_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
+                printf "define([[_site_repo]], [[%s]])dnl\n" "$site_repo" >> "$tmpm4"
                 printf "define([[_year_links]], [[%s]])dnl\n" "$year_links" >> "$tmpm4"
                 printf "define([[_body_content]], [[%s]])dnl\n" "$(printf '%s\n' "$archive_body" | m4_escape)" >> "$tmpm4"
                 printf "include([[${layouts_dir}/default.m4]])dnl\n" >> "$tmpm4"

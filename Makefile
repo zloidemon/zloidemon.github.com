@@ -28,7 +28,8 @@ posts: ${BUILD}/posts.sh ${BUILD}/frontmatter.awk ${BUILD}/resolve-assets.awk ${
 	  ${SITE_URL} \
 	  "${SITE_TITLE}" \
 	  ${ASSETS_DIR} \
-	  ${DATA}
+	  ${DATA} \
+	  ${SITE_REPO_HTTP}
 
 archives: ${BUILD}/archives.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.txt
 	sh ${BUILD}/archives.sh \
@@ -36,7 +37,8 @@ archives: ${BUILD}/archives.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 ${DAT
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
-	  "${SITE_TITLE}"
+	  "${SITE_TITLE}" \
+	  ${SITE_REPO_HTTP}
 
 tags: ${BUILD}/tags.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.txt
 	sh ${BUILD}/tags.sh \
@@ -44,7 +46,8 @@ tags: ${BUILD}/tags.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 ${DATA}/posts
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
-	  "${SITE_TITLE}"
+	  "${SITE_TITLE}" \
+	  ${SITE_REPO_HTTP}
 
 index: ${BUILD}/index.sh ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.txt
 	sh ${BUILD}/index.sh \
@@ -52,7 +55,8 @@ index: ${BUILD}/index.sh ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
-	  "${SITE_TITLE}"
+	  "${SITE_TITLE}" \
+	  ${SITE_REPO_HTTP}
 
 atom: ${BUILD}/atom.sh ${DATA}/posts.txt
 	sh ${BUILD}/atom.sh \
@@ -88,7 +92,8 @@ ${DATA}/posts.txt: ${BUILD}/posts.sh
 	  ${SITE_URL} \
 	  "${SITE_TITLE}" \
 	  ${ASSETS_DIR} \
-	  ${DATA}
+	  ${DATA} \
+	  ${SITE_REPO_HTTP}
 
 clean:
 	rm -rf ${OUTPUT} ${DATA}

@@ -5,6 +5,7 @@ layouts_dir="$2"
 output_dir="$3"
 site_url="$4"
 site_title="$5"
+site_repo="$6"
 
 build_dir=$(dirname "$0")
 
@@ -96,6 +97,7 @@ tmpm4=$(mktemp)
 printf "changequote([[, ]])dnl\n" > "$tmpm4"
 printf "define([[_page_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
 printf "define([[_site_title]], [[%s]])dnl\n" "$site_title" >> "$tmpm4"
+printf "define([[_site_repo]], [[%s]])dnl\n" "$site_repo" >> "$tmpm4"
 printf "define([[_year_links]], [[%s]])dnl\n" "$year_links" >> "$tmpm4"
 printf "define([[_body_content]], [[" >> "$tmpm4"
 printf '%s\n' "$articles" | m4_escape >> "$tmpm4"
