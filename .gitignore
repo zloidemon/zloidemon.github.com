@@ -1,5 +1,4 @@
-_build/site/
-_build/data/
+_build/
 __pycache__/
 *.pyc
 CNAME
