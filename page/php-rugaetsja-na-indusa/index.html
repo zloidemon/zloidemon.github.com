@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PHP ругается на Apache * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>PHP ругается на Apache</h2>
+    <ul class="post-info">
+      <li>Date: 20 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/php/">PHP</a>, <a href="/tags/apache/">Apache</a>, <a href="/tags/error/">error</a>, <a href="/tags/build/">build</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/patch/">patch</a></li>
+    </ul>
+  </header>
+  <pre><code class="language-php">&#47;usr&#47;local&#47;include&#47;apache22&#47;http_log.h:350: error: expected &#39;)&#39; before &#39;void&#39;
+In file included from &#47;usr&#47;ports&#47;lang&#47;php5&#47;work&#47;php-5.2.11&#47;sapi&#47;apache&#47;php_apache_http.h:63,
+                 from &#47;usr&#47;ports&#47;lang&#47;php5&#47;work&#47;php-5.2.11&#47;sapi&#47;apache&#47;sapi_apache.c:24:
+&#47;usr&#47;local&#47;include&#47;apache22&#47;util_script.h:90: error: expected declaration specifiers or &#39;...&#39; before &#39;apr_file_t&#39;
+&#47;usr&#47;local&#47;include&#47;apache22&#47;util_script.h:104: error: expected declaration specifiers or &#39;...&#39; before &#39;apr_bucket_brigade&#39;
+&#47;usr&#47;ports&#47;lang&#47;php5&#47;work&#47;php-5.2.11&#47;sapi&#47;apache&#47;sapi_apache.c: In function &#39;apache_php_module_main&#39;:
+&#47;usr&#47;ports&#47;lang&#47;php5&#47;work&#47;php-5.2.11&#47;sapi&#47;apache&#47;sapi_apache.c:44: error: &#39;NOT_FOUND&#39; undeclared (first use in this function)
+&#47;usr&#47;ports&#47;lang&#47;php5&#47;work&#47;php-5.2.11&#47;sapi&#47;apache&#47;sapi_apache.c:44: error: (Each undeclared identifier is reported only once
+&#47;usr&#47;ports&#47;lang&#47;php5&#47;work&#47;php-5.2.11&#47;sapi&#47;apache&#47;sapi_apache.c:44: error: for each function it appears in.)
+*** Error code 1
+</code></pre>
+<p>Проблема была в версии <strong>Apache</strong>, лечиться пересборкой без <em>спец патчей</em>.</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

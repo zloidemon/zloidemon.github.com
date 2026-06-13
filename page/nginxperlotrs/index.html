@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nginx with Perl and OTRS * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Nginx with Perl and OTRS</h2>
+    <ul class="post-info">
+      <li>Date: 18 Feb 2011</li>
+      
+      <li>Tagged with: <a href="/tags/otrs/">OTRS</a>, <a href="/tags/nginx/">Nginx</a>, <a href="/tags/perl/">Perl</a></li>
+    </ul>
+  </header>
+  <p>Hi everybody!
+I like <a href="http://www.nginx.org/">nginx</a>. It&#8217;s a fast web server! But I need using otrs, without apache and mod_perl. This is my configs for it:</p>
+<p>You can install otrs from freebsd ports tree and then use my configs with perl wrapper :)</p>
+<pre><code class="language-bash">$portmaster -d devel&#47;otrs www&#47;nginx www&#47;p5-FastCGI
+</code></pre>
+<p>nginx.conf</p>
+<pre><code class="language-nginx">
+server {
+    listen 80;
+    server_name localhost;
+    root &#47;usr&#47;local&#47;otrs&#47;var&#47;httpd&#47;htdocs;
+    access_log  &#47;var&#47;log&#47;nginx&#47;otrs.nginx_access.log;
+    index index.html;
+    location &#47;otrs-web {
+        gzip on;
+        alias &#47;usr&#47;local&#47;otrs&#47;var&#47;httpd&#47;htdocs;
+    }
+    location ~ ^&#47;otrs&#47;(.*\.pl)(&#47;.*)?$ {
+        gzip off; #gzip makes scripts feel slower since they have to complete before getting gzipped
+        #    fastcgi_pass  unix:&#47;..sock;
+        fastcgi_pass unix:&#47;var&#47;run&#47;perl-fcgi.sock;
+        #    fastcgi_pass  127.0.0.1:8999;
+        fastcgi_index index.pl;
+        fastcgi_param SCRIPT_FILENAME   &#47;usr&#47;local&#47;otrs&#47;bin&#47;fcgi-bin&#47;;
+        fastcgi_param QUERY_STRING      $query_string;
+        fastcgi_param REQUEST_METHOD    $request_method;
+        fastcgi_param CONTENT_TYPE      $content_type;
+        fastcgi_param CONTENT_LENGTH    $content_length;
+        fastcgi_param GATEWAY_INTERFACE CGI&#47;1.1;
+        fastcgi_param SERVER_SOFTWARE   nginx;
+        fastcgi_param SCRIPT_NAME       $fastcgi_script_name;
+        fastcgi_param REQUEST_URI       $request_uri;
+        fastcgi_param DOCUMENT_URI      $document_uri;
+        fastcgi_param DOCUMENT_ROOT     $document_root;
+        fastcgi_param SERVER_PROTOCOL   $server_protocol;
+        fastcgi_param REMOTE_ADDR       $remote_addr;
+        fastcgi_param REMOTE_PORT       $remote_port;
+        fastcgi_param SERVER_ADDR       $server_addr;
+        fastcgi_param SERVER_PORT       $server_port;
+        fastcgi_param SERVER_NAME       $server_name;
+    }
+}
+</code></pre>
+<p>And you need a wrapper for use perl :) You can get it from:</p>
+<p>copy <a href="http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/fastcgi-wrapper">fcgi-wrapper</a>  to &#47;usr&#47;local&#47;sbin
+copy <a href="http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/perl-fcgi">perl-fcgi</a> to &#47;usr&#47;local&#47;sbin</p>
+<p>And rc.d script</p>
+<p><a href="http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/perl-fcgi.rc">perl-fcgi.rc</a> to &#47;usr&#47;local&#47;etc&#47;rc.d&#47;perl-fcgi</p>
+<p>then add</p>
+<pre><code class="language-bash">$echo perl_fcgi_enable=\"YES\" &#62;&#62;&#47;etc&#47;rc.conf
+</code></pre>
+<p>Thanks <a href="http://technotes.1000lines.net/nginx-perl-fastcgi-how-to/">tech notes</a></p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

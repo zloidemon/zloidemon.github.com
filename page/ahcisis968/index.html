@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AHCI + SIS968 * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>AHCI + SIS968</h2>
+    <ul class="post-info">
+      <li>Date: 30 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/ahci/">AHCI</a>, <a href="/tags/sis968/">SIS968</a>, <a href="/tags/hdd/">HDD</a>, <a href="/tags/kernel/">kernel</a>, <a href="/tags/bios/">bios</a>, <a href="/tags/hardware/">hardware</a></li>
+    </ul>
+  </header>
+  <pre><code class="language-bash">atapci1@pci0:0:5:0:     class=0x01018f card=0x08021558 chip=0x11831039 rev=0x03 hdr=0x00
+    vendor     = &#39;Silicon Integrated Systems (SiS)&#39;
+    device     = &#39;?SATA (?SIS966&#47;968 )&#39;
+    class      = mass storage
+    subclass   = ATA
+</code></pre>
+<p>В ядро:</p>
+<pre><code class="language-bash">device          ahci
+device          ada
+</code></pre>
+<p>После чего имеем:</p>
+<pre><code class="language-bash">ahci0@pci0:0:5:0:       class=0x010601 card=0x08021558 chip=0x11851039 rev=0x03 hdr=0x00
+    vendor     = &#39;Silicon Integrated Systems (SiS)&#39;
+    device     = &#39;AHCI Controller (SIS968)&#39;
+    class      = mass storage
+    subclass   = SATA
+</code></pre>
+<p>И не забываем <em>поправаить</em> <strong>&#47;etc&#47;fstab</strong>, и <strong>включить</strong> в <strong>BIOS AHCI</strong>. </p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

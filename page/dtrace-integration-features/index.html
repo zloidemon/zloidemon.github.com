@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DTrace integration features * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>DTrace integration features</h2>
+    <ul class="post-info">
+      <li>Date: 29 Sep 2013</li>
+      
+      <li>Tagged with: <a href="/tags/dtrace/">DTrace</a>, <a href="/tags/tarantool/">tarantool</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/linux/">Linux</a>, <a href="/tags/solaris/">Solaris</a>, <a href="/tags/osx/">OSX</a>, <a href="/tags/kernel/">kernel</a>, <a href="/tags/c/">C</a>, <a href="/tags/cmake/">CMake</a></li>
+    </ul>
+  </header>
+  <p>This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I&#8217;ll explain my troubles and approach to fixing bugs in <a href="http://tarantool.org" title="The Tarantool project">tarantool</a>, a no-sql DB, with common instruments.</p>
+<p>This post isn&#8217;t yet complete. I&#8217;ll add new information after fix&#47;found bugs.</p>
+<h2 id="instruments-to-research">Instruments to research:</h2>
+<p>OSs:</p>
+<ul>
+<li>FreeBSD 9.1-RELEASE-p7</li>
+<li>Darwin 12.5.0</li>
+<li>Linux 3.8.13-16.el6uek.x86_64 (Oracle Linux)</li>
+</ul>
+<p>Solaris based:</p>
+<ul>
+<li>OpenIndiana 151a8 (so old compilers)</li>
+<li>Oracle Linux 11.1 (so old compilers)</li>
+<li>SmartOS latest (all stuff got coredump)</li>
+</ul>
+<p>DTrace Versions:</p>
+<ul>
+<li>dtrace: Sun D 1.7 (FreeBSD)</li>
+<li>dtrace: Sun D 1.6.2 (Darwin)</li>
+<li>dtrace: Sun D 1.6.3 (Oracle Linux)</li>
+</ul>
+<h2 id="generate-dtrace-object-twice">Generate DTrace object twice</h2>
+<pre><code class="language-sh">%&#62; sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+</code></pre>
+<p>If you have a modular application you&#8217;ll try to generate many dtrace objects to link that with the application. You get static libraries and then link. This is a common approach to programming but if you use DTrace in more than one library you need run <code>dtrace -G</code> to get one dtrace object which include all providers.</p>
+<p>After the first time you get a dtrace object with correct information but you would like to get object for all providers in different libs in one object. I&#8217;ll explain the main issue with second generation with an example.</p>
+<p>This is an example with one library. You are able to do this on the command line for getting incorrect object because you did correct object before with information about one: ***</p>
+<pre><code class="language-sh">%&#62; dtrace -G -s ..&#47;..&#47;include&#47;dtrace.d ..&#47;CMakeFiles&#47;cjson.dir&#47;third_party&#47;lua-cjson&#47;lua_cjson.c.o -o cjson_dtrace_second.o
+
+%&#62; md5 cjson_dtrace.o
+MD5 (cjson_dtrace.o) = 69cc9d1037f106e682464af05205458c
+%&#62; md5 cjson_dtrace_second.o
+MD5 (cjson_dtrace_second.o) = a42c72ae540be068243936afe2d7b868
+</code></pre>
+<p>On above list you see mismatched md5 sums. When I found that I started fire to drill-down to object files and look at what&#8217;s incorrect.</p>
+<p>I got 2 dtrace objects, Using the <code>strings</code> command I found the differences:</p>
+<pre><code class="language-sh">%&#62; strings -a cjson_dtrace_second.o &#62; dtrace_second
+%&#62; strings -a cjson_dtrace.o &#62; dtrace
+</code></pre>
+<pre><code class="language-sh">%&#62; diff -up dtrace dtrace_second
+</code></pre>
+<p>I saw removed functions with dtrace defines for a trace.</p>
+<pre><code class="language-diff">--- dtrace  2013-09-27 13:47:17.839671510 +0000
++++ dtrace_second   2013-09-27 13:47:08.717669720 +0000
+@@ -117,15 +117,10 @@ vfprintf
+ encode-done
+ char *
+ char *
+-json_encode
+-$dtrace140912.json_encode
+ encode-start
+ char *
+ char *
+-json_encode
+-$dtrace140912.json_encode
+ new-entry
+-luaopen_cjson
+ tick-start
+ tick-stop
+ tarantool
+</code></pre>
+<p>In the next stage I looked inside <code>.SUNW_dof</code> in section of dtrace object file.</p>
+<pre><code class="language-sh">%&#62; objdump -s -j .SUNW_dof cjson_dtrace.o
+</code></pre>
+<p>This is correct hex output from dtrace object:</p>
+<pre><code class="language-text">cjson_dtrace.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0270 00000000 00000000 00000000 05000000  ................
+ 0280 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 0290 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 02a0 63686172 202a006a 736f6e5f 656e636f  char *.json_enco
+ 02b0 64650024 64747261 63653134 30393132  de.$dtrace140912
+ 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_encode.enc
+ 02d0 6f64652d 73746172 7400696e 74006368  ode-start.int.ch
+ 02e0 6172202a 00696e74 00636861 72202a00  ar *.int.char *.
+ 02f0 6a736f6e 5f656e63 6f646500 24647472  json_encode.$dtr
+ 0300 61636531 34303931 322e6a73 6f6e5f65  ace140912.json_e
+ 0310 6e636f64 65006e65 772d656e 74727900  ncode.new-entry.
+ 0320 6c75616f 70656e5f 636a736f 6e007469  luaopen_cjson.ti
+ 0330 636b2d73 74617274 00696e74 00696e74  ck-start.int.int
+ 0340 00746963 6b2d7374 6f700069 6e740069  .tick-stop.int.i
+ 0350 6e740074 6172616e 746f6f6c 00000000  nt.tarantool....
+ 0360 53756e20 4420312e 37004672 65654253  Sun D 1.7.FreeBS
+ 0370 44000000 00000000 00000000 00000000  D...............
+ 0380 00000000 00000000 00000000 00000000  ................
+</code></pre>
+<p>Drill-down to next <code>incorrect</code> object:</p>
+<pre><code class="language-sh">%&#62; objdump -s -j .SUNW_dof cjson_dtrace_second.o
+</code></pre>
+<p>In <code>.SUNW_dof</code> sect I saw empty dtrace providers for tracing function:</p>
+<pre><code class="language-text">cjson_dtrace_second.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0190 00000000 00000000 00000000 05000000  ................
+ 01a0 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 01b0 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 01c0 63686172 202a0065 6e636f64 652d7374  char *.encode-st
+ 01d0 61727400 696e7400 63686172 202a0069  art.int.char *.i
+ 01e0 6e740063 68617220 2a006e65 772d656e  nt.char *.new-en
+ 01f0 74727900 7469636b 2d737461 72740069  try.tick-start.i
+ 0200 6e740069 6e740074 69636b2d 73746f70  nt.int.tick-stop
+ 0210 00696e74 00696e74 00746172 616e746f  .int.int.taranto
+ 0220 6f6c0000 00000000 53756e20 4420312e  ol......Sun D 1.
+ 0230 37004672 65654253 44000000 00000000  7.FreeBSD.......
+ 0240 00000000 00000000 00000000 00000000  ................
+</code></pre>
+<p>The next step is finding differences in library objects. After running <code>dtrace -G</code> twice I get these changes in main library objects:</p>
+<pre><code class="language-sh">%&#62; md5 lua_cjson.c.o
+MD5 (lua_cjson.c.o) = bdc0afbb0869f7bee70c29a7ba538127
+%&#62; md5 lua_cjson.c.o.dtrace
+MD5 (lua_cjson.c.o.dtrace) = 0d65212c87350dceb64f71429b72ce3b
+</code></pre>
+<p>I looked at the <code>.text</code> section of the object file in <code>objdump</code> because this section contains the executible code.</p>
+<pre><code class="language-sh">%&#62; objdump -d -j .text lua_cjson.c.o.dtrace &#62; dtrace
+%&#62; objdump -d -j .text lua_cjson.c.o &#62; non-dtrace
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The JunOS installation script * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>The JunOS installation script</h2>
+    <ul class="post-info">
+      <li>Date: 08 Jan 2011</li>
+      
+      <li>Tagged with: <a href="/tags/junos/">JunOS</a>, <a href="/tags/juniper/">Juniper</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/shell/">shell</a>, <a href="/tags/script/">script</a></li>
+    </ul>
+  </header>
+  <p>I don&#8217;t like installing manually&#8230; So I&#8217;ve written a script for it. This is an autoamtic installation script for the JunOS olive for which you need to be using a version of <a href="http://www.freebsd.org/">FreeBSD</a> &#60; 8.  <a href="http://www.freebsd.org/">FreeBSD</a> 8 is not supported.</p>
+<pre><code class="language-bash">#!&#47;bin&#47;sh
+FILE=&#39;jinstall-10.4R1.9-domestic-signed.tgz&#39;
+HASH=649006003c9773859882411246405a39
+UNTAR=&#39;tar zxf&#39;
+TAR=&#39;tar zcf&#39;
+WORK=tmp
+
+work (){
+    if [ -d $WORK ]; then
+        rm -fr $WORK
+    fi
+    mkdir -p $WORK
+    cd $WORK
+}
+
+dwork (){
+    cd ..&#47;;rm -fr $WORK
+}
+if [ 
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

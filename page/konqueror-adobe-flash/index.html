@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konqueror with Adobe Flash Player 10 * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Konqueror with Adobe Flash Player 10</h2>
+    <ul class="post-info">
+      <li>Date: 18 Mar 2010</li>
+      
+      <li>Tagged with: <a href="/tags/konqueror/">Konqueror</a>, <a href="/tags/adobe/">Adobe</a>, <a href="/tags/flash/">Flash</a>, <a href="/tags/browser/">browser</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a></li>
+    </ul>
+  </header>
+  <p>Надо было adobe flash в konqueror</p>
+<pre><code class="language-bash">%sudo make -C &#47;usr&#47;ports&#47;www&#47;nspluginwrapper install clean
+%sudo make -C &#47;usr&#47;ports&#47;www&#47;linux-f10-flashplugin10 install clean
+%sudo make -C &#47;usr&#47;ports&#47;misc&#47;konq-plugins-kde4 install clean
+</code></pre>
+<p>Непосредственно сама установка:</p>
+<pre><code class="language-bash">%nspluginwrapper -i &#47;usr&#47;local&#47;lib&#47;npapi&#47;linux-f10-flashplugin&#47;libflashplayer.so
+%nspluginwrapper -l &#47;home&#47;zloidemon&#47;.mozilla&#47;plugins&#47;npwrapper.libflashplayer.so
+Original plugin: &#47;usr&#47;local&#47;lib&#47;npapi&#47;linux-f10-flashplugin&#47;libflashplayer.so
+Wrapper version string: 1.2.2
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

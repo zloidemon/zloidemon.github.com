@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>UTF-8 + KDM * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>UTF-8 + KDM</h2>
+    <ul class="post-info">
+      <li>Date: 06 Feb 2010</li>
+      
+      <li>Tagged with: <a href="/tags/utf-8/">UTF-8</a>, <a href="/tags/kdm/">KDM</a>, <a href="/tags/kde/">KDE</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/boot/">boot</a>, <a href="/tags/locale/">locale</a></li>
+    </ul>
+  </header>
+  <p>Вообще не вижу смысла в консоли <strong>UTF-8</strong>, но в иксах приходиться использовать постоянно. Всякие глупые трактаты с кучей настроек <em>задолбали</em>, так как проблема лечить всего двумя строками:</p>
+<pre><code class="language-bash">%cat &#47;etc&#47;xprofile
+export LC_ALL=ru_RU.UTF-8
+export LC_CTYPE=ru_RU.UTF-8
+</code></pre>
+<p>Запускаем <strong>KDM</strong> и радуемся что у всех пользователей теперь есть <strong>UTF-8</strong>.
+<strong>PS</strong>: Так же это можно прописать либо в <strong>~&#47;.xprofile</strong> <strong>~&#47;.xinitrc</strong> либо непосредственно в сам <strong>xinitrc</strong>.</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

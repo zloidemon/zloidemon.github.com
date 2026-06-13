@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vacuum-im * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>vacuum-im</h2>
+    <ul class="post-info">
+      <li>Date: 13 Dec 2009</li>
+      
+      <li>Tagged with: <a href="/tags/xmpp/">XMPP</a>, <a href="/tags/jabber/">Jabber</a>, <a href="/tags/vacuum-im/">vacuum-im</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/git/">Git</a></li>
+    </ul>
+  </header>
+  <p>Не так давно вышел довольно интересный <strong>XMMP</strong> клиент. В нем все реализуется на <strong>plugins</strong>, что довольно улучшает функционал по сравнению с другими клиентами на Qt. Я очень сильный приверженец <em>Tkabber</em>, но этот продукт вполне может заменить его в будущем. С разработчиками можно легко связаться, и предложить идеи или попросить исправить ошибки. Очень отзывчивый коллектив.
+Сайт проэкта <a href="http://code.google.com/p/vacuum-im/">vacuum-im</a>, конференция vacuum(at)conference(dot)jabber(dot)ru инструкции по установке <a href="http://jawiki.ru/Vacuum">vacuum-install</a>
+порт <strong>vacuum-im</strong> для <strong>FreeBSD</strong> можно взять здесь <a href="http://gitorious.org/zloidemon-freebsd-ports/trunk/trees/master/vacuum-im">vacuum-port</a>.</p>
+<p>Установка:</p>
+<pre><code class="language-bash">%sudo make -C &#47;usr&#47;ports&#47;devel&#47;git install clean
+%git clone git:&#47;&#47;gitorious.org&#47;zloidemon-freebsd-ports&#47;trunk.git
+%sudo make -C trunk&#47;_tested&#47;vacuum-im install clean
+</code></pre>
+<p>Порт уже полностью роботоспособный, но до тех пор пока автор не выпустит хотя бы 0.1 добовлять его не стоит.</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

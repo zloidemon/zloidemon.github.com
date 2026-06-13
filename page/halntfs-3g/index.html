@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HAL + NTFS-3g * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>HAL + NTFS-3g</h2>
+    <ul class="post-info">
+      <li>Date: 30 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/hal/">HAL</a>, <a href="/tags/ntfs-3g/">NTFS-3g</a>, <a href="/tags/fuse/">fuse</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a></li>
+    </ul>
+  </header>
+  <p>Ставим порт:</p>
+<pre><code class="language-bash">%sudo make -C &#47;usr&#47;ports&#47;sysutils&#47;fusefs-ntfs install clean
+%sudo echo &#39;fusefs_enable=\"YES\"&#39;&#62;&#62;&#47;etc&#47;rc.conf
+</code></pre>
+<p>Удоляем и меняем:</p>
+<pre><code class="language-bash">%sudo rm &#47;sbin&#47;mount_ntfs
+%sudo cp &#47;usr&#47;local&#47;share&#47;hal&#47;mount-fuse &#47;sbin&#47;mount_ntfs
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

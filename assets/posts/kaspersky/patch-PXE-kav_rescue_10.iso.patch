@@ -1,0 +1,32 @@
+--- sbin/dmsquash-live-root.orig	2014-01-05 21:26:33.581580759 +0400
++++ sbin/dmsquash-live-root	2014-01-06 21:42:30.159646123 +0400
+@@ -46,9 +46,7 @@ fi
+ 
+ # determine filesystem type for a filesystem image
+ det_img_fs() {
+-    local _img="$1" _loop=$(losetup -f) _fs
+-    losetup $_loop $_img; _fs=$(det_fs $_loop); losetup -d $_loop
+-    echo $_fs
++    echo squashfs
+ }
+ 
+ for arg in $CMDLINE; do case $arg in ro|rw) liverw=$arg ;; esac; done
+@@ -62,7 +60,6 @@ if [ -f $livedev ]; then
+         auto) die "cannot mount live image (unknown filesystem type)" ;;
+         *) FSIMG=$livedev ;;
+     esac
+-else
+     mount -n -t $fstype -o ${liverw:-ro} $livedev /run/initramfs/live
+     if [ "$?" != "0" ]; then
+         die "Failed to mount block device of live image"
+--- init.orig	2014-01-05 21:26:33.571246205 +0400
++++ init	2014-01-06 19:55:26.324595021 +0400
+@@ -288,7 +288,7 @@ unset main_loop
+ unset RDRETRY
+ 
+ if  ! ismounted "/run/initramfs/live"; then
+-    CDROM_DEVICES="/dev/sr*"
++    CDROM_DEVICES="/image.squashfs"
+     for i in $CDROM_DEVICES
+     do
+         /sbin/dmsquash-live-root $i

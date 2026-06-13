@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Захват экрана в видео * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Захват экрана в видео</h2>
+    <ul class="post-info">
+      <li>Date: 24 Mar 2010</li>
+      
+      <li>Tagged with: <a href="/tags/screencast/">screencast</a>, <a href="/tags/x11grab/">x11grab</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/shell/">shell</a>, <a href="/tags/video/">video</a></li>
+    </ul>
+  </header>
+  <p>Скрипт для захвата экрана в видео. На мой взгляд лучший вариант из всего что я видел.
+Собираем порт с активной опцией <strong>X11GRAB</strong>:</p>
+<pre><code class="language-bash">$sudo make -C &#47;usr&#47;ports&#47;multimedia&#47;ffmpeg&#47; config install clean
+</code></pre>
+<pre><code class="language-bash">#!&#47;bin&#47;sh
+
+name="$(date +%F-%T)"
+# Desktop
+#ffmpeg -f oss -i &#47;dev&#47;dsp -acodec ac3 -ab 192k -f x11grab -s 1440x900 -r 30 -isync -i :0.0 -sameq -y -vcodec mpeg4 ~&#47;desktop.${name}.mp4
+#ffmpeg -f oss -i &#47;dev&#47;dsp -acodec ac3 -ab 128k -f x11grab -s 1440x900 -r 30 -g 120 -isync -i :0.0 -s 800x500 -sameq -y ~&#47;desktop.${name}.mpg
+#only video
+ffmpeg -f x11grab -s 1440x900 -r 30 -g 120 -isync -i :0.0 -s 800x500 -sameq -y ~&#47;desktop.${name}.mpeg
+#video and sound
+#ffmpeg -f oss -i &#47;dev&#47;dsp -acodec ac3 -ab 128k -f x11grab -s 1440x900 -r 30 -g 120 -isync -i :0.0 -s 800x500 -sameq -y ~&#47;desktop.${name}.mpeg
+# Webcam (not work - error open &#47;dev&#47;video0)
+#ffmpeg -f oss -i &#47;dev&#47;dsp -f video4linux2 -i &#47;dev&#47;video0 ~&#47;desktop.${name}.mp4
+</code></pre>
+<p>Спасибо <strong>fidaj</strong> за скрипт :)</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

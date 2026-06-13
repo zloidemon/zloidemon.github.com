@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DooM 3 on FreeBSD * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>DooM 3 on FreeBSD</h2>
+    <ul class="post-info">
+      <li>Date: 18 Dec 2009</li>
+      
+      <li>Tagged with: <a href="/tags/doom3/">DooM3</a>, <a href="/tags/games/">games</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/freebsd/">FreeBSD</a></li>
+    </ul>
+  </header>
+  <p>Ставим порт:</p>
+<pre><code class="language-bash">%sudo make -C &#47;usr&#47;ports&#47;games&#47;linux-doom3
+</code></pre>
+<p>Настраиваем <strong>linuxulator</strong>
+Копируем с установочных диска(ов)</p>
+<pre><code class="language-bash">pak000.pk4
+pak001.pk4
+pak002.pk4
+pak003.pk4
+pak004.pk4
+</code></pre>
+<p>сюда <strong>&#47;usr&#47;local&#47;lib&#47;linux-doom3&#47;base</strong>. Если не получается ввести свой ключик вписываем его в:</p>
+<pre><code class="language-bash">~&#47;.doom3&#47;base&#47;doomkey
+~&#47;.doom3&#47;base&#47;xpkey
+</code></pre>
+<p>Выглядить должен примерно так:</p>
+<pre><code class="language-bash">AAAAAAAAAAAAAAAA
+&#47;&#47; Do not give this file to ANYONE.
+&#47;&#47; id Software and Activision will NOT ask you to send this file to them.
+</code></pre>
+<p>в обоих файлах.
+Если нет звука, а поумолчанию его нету. Запускаем так:</p>
+<pre><code class="language-bash">%linux-doom3 +set s_driver oss
+</code></pre>
+<p>Я использую широкоформатный дисплей, для нормального функционирования настраиваем:
+<strong>~&#47;.doom3&#47;base&#47;DoomConfig.cfg</strong> вот эти строки:</p>
+<pre><code class="language-bash">seta r_customHeight "900"
+seta r_customWidth "1440"
+seta r_fullscreen "1"
+seta r_mode "-1"
+</code></pre>
+<p>Добовляем в <strong>&#47;etc&#47;hosts</strong> (если используется пиратская версия)</p>
+<p><code>bash
+127.0.0.1               idnet idnet.ua-corp.com
+</code>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

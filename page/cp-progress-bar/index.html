@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>cp (progress bar) * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>cp (progress bar)</h2>
+    <ul class="post-info">
+      <li>Date: 21 Dec 2009</li>
+      
+      <li>Tagged with: <a href="/tags/copy/">copy</a>, <a href="/tags/progress/">progress</a>, <a href="/tags/rsync/">rsync</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/perfomance/">perfomance</a></li>
+    </ul>
+  </header>
+  <p>Захотелось наблюдать прогресс копирования файлов, те нужна была замена стандартной <em>cp</em>.
+Вот что получилось:</p>
+<pre><code class="language-bash">dir&#47;file.bin
+        1625 100%    9.50kB&#47;s    0:00:00 (xfer#8661, to-check=3&#47;9625)
+</code></pre>
+<p>Для замены выбрал rsync:</p>
+<pre><code class="language-bash">%sudo -C &#47;usr&#47;ports&#47;net&#47;rsync install clean
+</code></pre>
+<p>Для копирования пользуемся:</p>
+<pre><code class="language-bash">rsync -rv --progress file_in file_out
+</code></pre>
+<p>Небольшое сравнение, что заставило отказаться от этой затеи.</p>
+<p>Копирование одного файла размером <strong>1,7G</strong>:</p>
+<pre><code class="language-bash">результат rsync: 13,82s user 11,99s system 23% cpu 1:47,75 total
+результат cp:    0,00s user 5,78s system 4% cpu 1:58,71 total
+</code></pre>
+<p>Много мелких файлов:</p>
+<pre><code class="language-bash">результат rsync: 1,59s user 3,48s system 10% cpu 48,672 total
+результат cp:    0,04s user 1,33s system 17% cpu 7,915 total
+</code></pre>
+<p>Вывод: не нужно.</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

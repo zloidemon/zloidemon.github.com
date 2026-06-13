@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Флешка и hal * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Флешка и hal</h2>
+    <ul class="post-info">
+      <li>Date: 20 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/usb/">USB</a>, <a href="/tags/hal/">HAL</a>, <a href="/tags/sysctl/">sysctl</a>, <a href="/tags/freebsd/">FreeBSD</a></li>
+    </ul>
+  </header>
+  <pre><code class="language-bash">%sudo echo "vfs.usermount=1" &#62;&#62; &#47;etc&#47;sysctl.conf
+%diff -up PolicyKit.conf.dist PolicyKit.conf
+</code></pre>
+<pre><code class="language-diff">– PolicyKit.conf.dist 2009-05-11 13:24:47.027109231 +0800
++++ PolicyKit.conf 2009-05-14 16:53:17.171406382 +0800
+@@ -10,4 +10,10 @@
+&#60;return result="yes" &#47;&#62;
+&#60;&#47;match&#62;
+&#60;define_admin_auth group="wheel" &#47;&#62;
++ &#60;match action="org.freedesktop.hal.storage.mount-removable"&#62;
++ &#60;return result="yes" &#47;&#62;
++ &#60;&#47;match&#62;
++ &#60;match action="org.freedesktop.hal.storage.mount-fixed"&#62;
++ &#60;return result="yes" &#47;&#62;
++ &#60;&#47;match&#62;
+&#60;&#47;config&#62;
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

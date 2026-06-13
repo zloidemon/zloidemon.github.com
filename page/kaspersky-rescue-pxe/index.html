@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kaspersky Rescue PXE * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Kaspersky Rescue PXE</h2>
+    <ul class="post-info">
+      <li>Date: 31 Jan 2010</li>
+      
+      <li>Tagged with: <a href="/tags/boot/">boot</a>, <a href="/tags/kernel/">kernel</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/pxe/">PXE</a>, <a href="/tags/kaspersky/">Kaspersky</a>, <a href="/tags/rescue/">rescue</a>, <a href="/tags/antivirus/">antivirus</a></li>
+    </ul>
+  </header>
+  <pre><code class="language-bash"># Downloading files....
+zloidemon$ wget -c http:&#47;&#47;devbuilds.kaspersky-labs.com&#47;devbuilds&#47;RescueDisk&#47;kavrescue2008.iso
+zloidemon$ wget -c http:&#47;&#47;data2.kaspersky-labs.com:8080&#47;updater&#47;updaterforwindowsv.3.2.0.2.zip
+# Updating bases
+zloidemon$ mkdir tmp &#38;&#38; cd tmp
+zloidemon$ unzip ..&#47;updaterforwindowsv.3.2.0.2.zip
+zloidemon$ wget -c http:&#47;&#47;kegel.com&#47;wine&#47;winetricks
+zloidemon$ chmod +x winetricks
+zloidemon$ .&#47;winetricks vcrun2005
+zloidemon$ mkdir -p Temp&#47;temporaryFolder&#47;bases&#47;av&#47;kdb&#47;i386
+zloidemon$ mkdir iso
+zloidemon$ sudo mount -o loop ..&#47;kavrescue2008.iso iso&#47;
+zloidemon$ cp iso&#47;bases&#47;. Temp&#47;temporaryFolder&#47;bases&#47;av&#47;kdb&#47;i386&#47;
+zloidemon$ wget -c http:&#47;&#47;gitorious.org&#47;zloidemon-freebsd-configs&#47;trunk&#47;blobs&#47;raw&#47;master&#47;patches&#47;PXE&#47;patchssstorage.ini
+zloidemon$ patch -p0 &#60; patchssstorage.ini
+# My patch from http:&#47;&#47;gitorious.org&#47;zloidemon-freebsd-configs&#47;trunk&#47;blobs&#47;master&#47;patches&#47;PXE&#47;patchssstorage.ini
+zloidemon$ wine Updater.exe -u -o ssstorage.ini -c
+zloidemon$ mkdir new &#38;&#38; cp -R iso&#47;bases new&#47;
+zloidemon$ cp Updates&#47;bases&#47;av&#47;kdb&#47;i386&#47;*.* new&#47;bases&#47;
+zloidemon$ cp Updates&#47;bases&#47;av&#47;kdb&#47;i386&#47;kdb-i386-0607g.xml new&#47;bases&#47;kdb-0607g.xml
+zloidemon$ cp Updates&#47;bases&#47;av&#47;kdb&#47;i386&#47;kdb.stt new&#47;bases&#47;Stat&#47;
+zloidemon$ cp Updates&#47;index&#47;u0607g.xml new&#47;bases&#47;Stat&#47;
+zloidemon$ mksquashfs new bases.squashfs
+# Make image for PXE boot
+zloidemon$ wget -c http:&#47;&#47;gitorious.org&#47;zloidemon-freebsd-configs&#47;trunk&#47;blobs&#47;raw&#47;master&#47;patches&#47;PXE&#47;patch-PXEkavrescue2008.iso.patch
+zloidemon$ mkdir pxe &#38;&#38; cd pxe
+zloidemon$ zcat ..&#47;iso&#47;isolinux&#47;rescue.igz |cpio -id
+zloidemon$ patch -p0 &#60;..&#47;patch-PXEkavrescue2008.iso.patch
+# My patch from http:&#47;&#47;gitorious.org&#47;zloidemon-freebsd-configs&#47;trunk&#47;blobs&#47;master&#47;patches&#47;PXE&#47;patch-PXEkavrescue2008.iso.patch
+# This is patch based on Gentoo PXE: http:&#47;&#47;www.thegibson.org&#47;blog&#47;archives&#47;13
+zloidemon$ sudo cp ..&#47;iso&#47;image.squashfs .&#47; &#38;&#38; sudo chmod 644 image.squashfs
+zloidemon$ cp ..&#47;bases.squashfs .&#47;
+zloidemon$ find . -print | cpio -o -H newc &#62; ..&#47;rescue.igz
+</code></pre>
+<p>Example config:</p>
+<pre><code class="language-ini">label Kaspersky Rescue
+kernel data&#47;antivir&#47;kav&#47;rescue
+append initrd=data&#47;antivir&#47;kav&#47;rescue.igz root=&#47;dev&#47;ram0 cdroot=1 loop=image.squashfs looptype=squashfs real_root=&#47;
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

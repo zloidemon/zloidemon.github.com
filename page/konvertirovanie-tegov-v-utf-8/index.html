@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Конвертирование тегов в mp3 в UTF-8 * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Конвертирование тегов в mp3 в UTF-8</h2>
+    <ul class="post-info">
+      <li>Date: 20 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/converting/">converting</a>, <a href="/tags/utf-8/">UTF-8</a>, <a href="/tags/cp1251/">CP1251</a>, <a href="/tags/mp3/">mp3</a>, <a href="/tags/mutagen/">mutagen</a>, <a href="/tags/iconv/">iconv</a></li>
+    </ul>
+  </header>
+  <p><strong>Mutagen</strong> как ни когда подходит для этого черного дела:</p>
+<pre><code class="language-bash">%mid3iconv -d -eCP1251 --remove-v1 *.mp3
+</code></pre>
+<p>или</p>
+<pre><code class="language-bash">%find &#47;path&#47;to&#47;mp3&#47;files&#47; -name &#39;*.mp3&#39; -exec mid3iconv -d -eCP1251 --remove-v1 "{}" \;
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

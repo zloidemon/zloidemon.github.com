@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Проблемы с memcache после обыновления PHP * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Проблемы с memcache после обыновления PHP</h2>
+    <ul class="post-info">
+      <li>Date: 20 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/php/">PHP</a>, <a href="/tags/coredump/">coredump</a>, <a href="/tags/memcached/">memcached</a>, <a href="/tags/error/">error</a></li>
+    </ul>
+  </header>
+  <pre><code class="language-php">Fatal error: Uncaught exception &#39;Zend_Cache_Exception&#39; with message
+&#39;The memcache extension must be loaded for using this backend !&#39; in &#47;site&#47;classes&#47;lib&#47;external&#47;DklabCache&#47;Zend&#47;Cache.php:141
+Stack trace:
+#0 &#47;site&#47;classes&#47;lib&#47;external&#47;DklabCache&#47;Zend&#47;Cache&#47;Backend&#47;Memcached.php(97): Zend_Cache::throwException(&#39;The memcache ex...&#39;)
+#1 &#47;site&#47;classes&#47;modules&#47;sys_cache&#47;Cache.class.php(76): Zend_Cache_Backend_Memcached-&#62;__construct(Array)
+#2 &#47;site&#47;classes&#47;engine&#47;Engine.class.php(68): LsCache-&#62;Init()
+#3 &#47;site&#47;classes&#47;engine&#47;Router.class.php(99): Engine-&#62;InitModules()
+#4 &#47;site&#47;index.php(31): Router-&#62;Exec()
+#5 {main} thrown in &#47;site&#47;classes&#47;lib&#47;external&#47;DklabCache&#47;Zend&#47;Cache.php on line 141
+</code></pre>
+<p>После обновления <strong>PHP</strong> возникла пробелма которая выше… Решается обновлением <strong>pecl-memcache</strong>.</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ISPConfig не видет MySQL * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>ISPConfig не видет MySQL</h2>
+    <ul class="post-info">
+      <li>Date: 20 Nov 2009</li>
+      
+      <li>Tagged with: <a href="/tags/ispconfig/">ISPConfig</a>, <a href="/tags/mysql/">MySQL</a>, <a href="/tags/jail/">jail</a>, <a href="/tags/sysctl/">sysctl</a></li>
+    </ul>
+  </header>
+  <pre><code class="language-bash">Please enter your MySQL server:localhost
+The MySQL server you specified cannot be reached!
+Please enter your MySQL server:192.168.0.1
+The MySQL server you specified cannot be reached!
+Please enter your MySQL server:name.server
+The MySQL server you specified cannot be reached!
+Please enter your MySQL server:127.0.0.1
+The MySQL server you specified cannot be reached!
+</code></pre>
+<p>Запуск производился в <strong>jail</strong>… путем поиска проблемы в коде было найдено, что проверяется сервер пигами.</p>
+<pre><code class="language-bash">%sudo sysctl security.jail.allow_raw_sockets=1
+security.jail.allow_raw_sockets: 0 -&#62; 1
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

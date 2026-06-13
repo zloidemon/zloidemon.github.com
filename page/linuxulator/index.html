@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>linuxulator * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>linuxulator</h2>
+    <ul class="post-info">
+      <li>Date: 21 Dec 2009</li>
+      
+      <li>Tagged with: <a href="/tags/kernel/">kernel</a>, <a href="/tags/linux/">Linux</a>, <a href="/tags/emulation/">emulation</a>, <a href="/tags/linuxulator/">linuxulator</a>, <a href="/tags/sysctl/">sysctl</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/freebsd/">FreeBSD</a></li>
+    </ul>
+  </header>
+  <p>Я предпочитаю монолитное ядро, рассматривать модульную структуру не вижу смысла, так как про нее очень много написано.</p>
+<p>Это нужно добавить в конфигурационный файл ядра:</p>
+<pre><code class="language-bash">options         COMPAT_LINUX
+options         LINSYSFS
+options         LINPROCFS
+</code></pre>
+<p>И собрать и установить конечно же.
+Ставим интересующий вас <strong>linux_base</strong> из имеющихся на данный момент в древе <strong>&#47;usr&#47;ports</strong>:</p>
+<pre><code class="language-bash">linux_base-f10
+linux_base-f7
+linux_base-f8
+linux_base-f9
+linux_base-fc4
+linux_base-fc6
+linux_base-gentoo-stage1
+linux_base-gentoo-stage3
+</code></pre>
+<p>Я использую который идет по умолчанию в <a href="http://www.freebsd.org/">FreeBSD</a> 8:</p>
+<pre><code class="language-bash">%sudo make -C &#47;usr&#47;ports&#47;emulators&#47;linux_base-f10
+</code></pre>
+<p>Так же нужно добавить несколько строк в &#47;etc&#47;fstab:</p>
+<pre><code class="language-bash">linsys &#47;compat&#47;linux&#47;sys linsysfs rw 0 0
+linproc &#47;compat&#47;linux&#47;proc linprocfs rw 0 0
+</code></pre>
+<p>В некоторых случаях придется изменить версию GNU&#47;Linux ядра, для этого нужно воспользоваться <strong>&#47;etc&#47;sysctl.conf</strong>. Это актуально в старых версиях <a href="http://www.freebsd.org/">FreeBSD</a>.</p>
+<pre><code class="language-bash">compat.linux.osrelease=2.6.16
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

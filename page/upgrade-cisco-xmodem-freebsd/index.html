@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Upgrade Cisco via xmodem on FreeBSD * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Upgrade Cisco via xmodem on FreeBSD</h2>
+    <ul class="post-info">
+      <li>Date: 27 Mar 2010</li>
+      
+      <li>Tagged with: <a href="/tags/cisco/">Cisco</a>, <a href="/tags/xmodem/">xmodem</a>, <a href="/tags/console/">console</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/ios/">IOS</a>, <a href="/tags/upgrade/">upgrade</a></li>
+    </ul>
+  </header>
+  <p>Убил <em>Cisco</em>&#8230;</p>
+<pre><code class="language-text">     Diagnostic Console  - Systems Engineering
+
+         Operation firmware version:  0.00.00   Status: invalid
+         Boot firmware version:  3.20                          
+
+
+
+         WARNING!!! Operation firmware is invalid.
+         Upgrade firmware to enable switch operation.
+
+     [U] Upgrade operation firmware (XMODEM)
+     [S] System debug interface             
+
+Enter Selection:
+</code></pre>
+<pre><code class="language-bash">$sudo make -C &#47;usr&#47;ports&#47;comms&#47;minicom install clean
+</code></pre>
+<p>Запускаем:</p>
+<pre><code class="language-bash">$minicom -s
+</code></pre>
+<p>Далее <em>Serial port setup</em> =&#62; Жмем &#8216;<em>E</em>&#8217; (E -    Bps&#47;Par&#47;Bits       : 57600 8N1) =&#62; Жмем &#8216;<em>C</em>&#8217; (C:   9600) =&#62; Жмем &#8216;<em>F</em>&#8217; (F - Hardware Flow Control : No) =&#62; <em>Exit</em></p>
+<p>Отобразиться меню в котором нужно выбрать &#8216;<em>U</em>&#8217;:</p>
+<p><em>[U] Upgrade operation firmware (XMODEM)</em></p>
+<p>Выбираем &#8216;<em>Yes</em>&#8217; для продолжения процесса загрузки:</p>
+<p>Do you wish to continue with the download process, [Y]es or [N]o? Yes</p>
+<p>Выбираем скорость нажатием &#8216;<em>9</em>&#8217;:</p>
+<p><em>Do you wish to upgrade at [9]600 (console speed) or [5]7600? 9600</em></p>
+<p>Далее нажимаем <em>ctrl+a</em> и потом &#8216;<em>s</em>&#8217;. После чего нужно выбрать <em>xmodem</em>, и выбрать фаил прошивки нажатием &#8216;<em>space</em>&#8217;. И жмем <em>Enter</em> на &#8216;<em>Ok</em>&#8217; для загрузки файла.</p>
+<p>После чего видим:</p>
+<pre><code class="language-text">     Diagnostic Console  - Systems Engineering                                                                                                                 
+                                                                                                                                                               
+         Operation firmware version:  9.00.07   Status: valid                                                                                                  
+         Boot firmware version:  3.20                                                                                                                          
+                                                                                                                                                               
+                                                                                                                                                               
+     [C] Continue with standard system start up                                                                                                                
+     [U] Upgrade operation firmware (XMODEM)                                                                                                                   
+     [S] System debug interface                                                                                                                                
+                                                                                                                                                               
+Enter Selection: 
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cannot dump. Device not defined or unavailable. * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Cannot dump. Device not defined or unavailable.</h2>
+    <ul class="post-info">
+      <li>Date: 17 Apr 2010</li>
+      
+      <li>Tagged with: <a href="/tags/coredump/">coredump</a>, <a href="/tags/panic/">panic</a>, <a href="/tags/kernel/">kernel</a>, <a href="/tags/freebsd/">FreeBSD</a></li>
+    </ul>
+  </header>
+  <p>Сегодня при возникновении <strong>Kernel panic</strong> обнаружил что не используется swap.</p>
+<pre><code class="language-bash">Cannot dump. Device not defined or unavailable.
+</code></pre>
+<p>Для решения этой проблемы нужно было добавить всего лишь одну строку в <strong>&#47;etc&#47;rc.conf</strong>:</p>
+<pre><code class="language-bash">dumpdev="AUTO"
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Установка junos 10 на PC * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Установка junos 10 на PC</h2>
+    <ul class="post-info">
+      <li>Date: 03 Jul 2010</li>
+      
+      <li>Tagged with: <a href="/tags/junos/">JunOS</a>, <a href="/tags/juniper/">Juniper</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/diff/">diff</a>, <a href="/tags/patch/">patch</a>, <a href="/tags/boot/">boot</a>, <a href="/tags/kernel/">kernel</a>, <a href="/tags/sysctl/">sysctl</a></li>
+    </ul>
+  </header>
+  <p>Устанавливал JunOS я непосредственно в 7.3-RELEASE-i386-bootonly.iso.
+Первое на что нужно обратить внимание, так это на разделение slice на partition. Если не создавать partition &#47;tmp, то возникает ошибка об нехватке свободного места на носителе md1, который в свою очередь имеет объём 160Mb.</p>
+<p>Нужно установить минимальную версию FreeBSD на носитель, и приступить к созданию модифицированного пакета.</p>
+<pre><code class="language-bash">$cd &#47;var&#47;tmp
+Кладем package сюда удобным для вас способом.... И приступаем к модификации.
+$mkdir blah;cd blah;tar zxvf ..&#47;jinstall-10.1R1.8-domestic-signed.tgz
+$mkdir blah;cd blah;tar zxvf ..&#47;jinstall-10.1R1.8-domestic.tgz
+
+$mkdir blah;cd blah;tar zxvf ..&#47;pkgtools.tgz
+$cp -v &#47;usr&#47;bin&#47;true bin&#47;checkpic
+
+$tar zcvf ..&#47;pkgtools.tgz *
+$cd ..&#47;;rm -rf blah
+$tar zcfv &#47;var&#47;tmp&#47;jinstall-10.1R1.8-domestic.tgz *
+Устанавливаем:
+$pkg_add -f jinstall-10.1R1.8-domestic.tgz
+$echo console=\"vidconsole\"&#62;&#62;&#47;boot&#47;loader.conf;reboot
+</code></pre>
+<p>Ожидаем окончания установки и радуемся:</p>
+<pre><code class="language-bash">root@%cli
+root&#62;show version
+Model: olive
+JUNOS Base OS boot [10.1R1.8]
+JUNOS Base OS Software Suite [10.1R1.8]
+JUNOS Kernel Software Suite [10.1R1.8]
+JUNOS Crypto Software Suite [10.1R1.8]
+JUNOS Packet Forwarding Engine Support (M&#47;T Common) [10.1R1.8]
+JUNOS Packet Forwarding Engine Support (M20&#47;M40) [10.1R1.8]
+JUNOS Online Documentation [10.1R1.8]
+JUNOS Voice Services Container package [10.1R1.8]
+JUNOS Border Gateway Function package [10.1R1.8]
+JUNOS Services AACL Container package [10.1R1.8]
+JUNOS Services LL-PDF Container package [10.1R1.8]
+JUNOS Services Stateful Firewall [10.1R1.8]
+JUNOS AppId Services [10.1R1.8]
+JUNOS IDP Services [10.1R1.8]
+JUNOS Routing Software Suite [10.1R1.8]
+</code></pre>
+<p>PS:</p>
+<ol>
+<li>В internet полно трактатов по установке olive на PC, но там старые версии, и для них не нужно создавать partition &#47;tmp в slice.</li>
+<li>HDD обязательно должен иметь имя ad0[s]X, либо нужно делать symlinks.</li>
+<li>Минимальный объём оперативной памяти 512M, но потом можно вставить HDD после установки в другой системный блок. Я использую junos на 256M, но заметны проблемы при запуске cli и других команд.</li>
+</ol>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

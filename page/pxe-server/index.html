@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PXE server * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>PXE server</h2>
+    <ul class="post-info">
+      <li>Date: 28 Jan 2010</li>
+      
+      <li>Tagged with: <a href="/tags/tftp/">TFTP</a>, <a href="/tags/pxe/">PXE</a>, <a href="/tags/syslinux/">syslinux</a>, <a href="/tags/gpxe/">gPXE</a>, <a href="/tags/dhcp/">DHCP</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/freebsd/">FreeBSD</a></li>
+    </ul>
+  </header>
+  <p>Ставим нужный софт:</p>
+<pre><code class="language-bash">$sudo make -C &#47;usr&#47;ports&#47;ftp&#47;tftp-hpa install clean
+$sudo mkdir -p &#47;var&#47;data&#47;tftp
+$sudo pkg_add -ri syslinux
+$sudo cp &#47;usr&#47;local&#47;share&#47;syslinux&#47;gpxelinux.0 &#47;var&#47;data&#47;tftp
+$sudo mkdir &#47;var&#47;data&#47;tftp&#47;syslinux
+$sudo cp -v &#47;usr&#47;local&#47;share&#47;syslinux&#47;*.c32 &#47;var&#47;data&#47;tftp&#47;syslinux&#47;
+$sudo mkdir &#47;var&#47;data&#47;tftp&#47;pxelinux.cfg
+</code></pre>
+<p>Некоторые полезные tools:</p>
+<pre><code class="language-bash">$sudo mkdir &#47;var&#47;data&#47;tftp&#47;tools
+$sudo cd &#47;var&#47;data&#47;tftp&#47;tools
+$sudo fetch http:&#47;&#47;www.memtest.org&#47;download&#47;2.01&#47;memtest86+-2.01.bin.gz
+$sudo gunzip memtest86+-2.01.bin.gz
+$sudo fetch http:&#47;&#47;www.hdt-project.org&#47;raw-attachment&#47;wiki&#47;hdt-0.3.5&#47;hdt_0_3_5.c32
+# Parted Magic
+$sudo fetch http:&#47;&#47;cdnetworks-kr-1.dl.sourceforge.net&#47;project&#47;partedmagic&#47;partedmagic&#47;Parted%20Magic%204.8&#47;pmagic-pxe-4.8.zip
+$sudo tar zxf pmagic-pxe-4.8.zip
+$sudo mv pmagic-pxe-4.8&#47;pmagic .&#47;
+# Norton Recovery Tool 
+$sudo mkdir symantec &#38;&#38; cd symantec
+$sudo fetch ftp:&#47;&#47;ftp.symantec.com&#47;public&#47;english_us_canada&#47;recovery&#47;2009&#47;NSWRECOVERY.iso
+$sudo fetch ftp:&#47;&#47;ftp.symantec.com&#47;public&#47;english_us_canada&#47;recovery&#47;2009&#47;NAV&#47;recovery_nav_x86.iso
+$sudo fetch ftp:&#47;&#47;ftp.symantec.com&#47;public&#47;english_us_canada&#47;recovery&#47;2009&#47;NIS&#47;recovery_nis_x86.iso
+$cd ..&#47;
+# Скачать Hirens BootCD можно здесь http:&#47;&#47;www.hirensbootcd.net
+$sudo tar xzf Hirens.BootCD.10.1.zip
+$sudo rm BootCD.txt Burn* DefaultKeyboardPatch.zip changes-10.0-10.1.txt HBCDCustomize.exe
+$sudo mv Hirens.BootCD.10.1.iso hirens_bootcd.10.1.iso
+</code></pre>
+<p>Собственно FreeBSD:</p>
+<pre><code class="language-bash">$sudo mkdir ..&#47;freebsd &#38;&#38; cd ..&#47;freebsd
+$sudo fetch ftp:&#47;&#47;ftp.freebsd.org&#47;pub&#47;FreeBSD&#47;releases&#47;i386&#47;ISO-IMAGES&#47;8.0&#47;8.0-RELEASE-i386-bootonly.iso
+$sudo dd if=&#47;dev&#47;zero of=8.0-RELEASE-i386-bootonly.img bs=1k count=45000
+$sudo mdconfig -f 8.0-RELEASE-i386-bootonly.img -u 0
+$sudo bsdlabel -w -B md0 auto
+$sudo newfs -m 0 md0a
+$sudo mkdir &#47;tmp&#47;img
+$sudo mount &#47;dev&#47;md0a &#47;tmp&#47;img
+$sudo mdconfig -f 8.0-RELEASE-i386-bootonly.iso -u 1
+$sudo mount_cd9660 &#47;dev&#47;md1 &#47;cdrom&#47;
+$sudo cp -rv &#47;cdrom&#47;* &#47;tmp&#47;img&#47;
+$sudo umount &#47;cdrom&#47; &#47;tmp&#47;img&#47; &#38;&#38; mdconfig -d -u 0 &#38;&#38; mdconfig -d -u 1
+</code></pre>
+<p>Для amd64 все так же только размеры чуток другой:</p>
+<pre><code class="language-bash">$sudo fetch ftp:&#47;&#47;ftp.freebsd.org&#47;pub&#47;FreeBSD&#47;releases&#47;amd64&#47;ISO-IMAGES&#47;8.0&#47;8.0-RELEASE-amd64-bootonly.iso
+%sudo dd if=&#47;dev&#47;zero of=8.0-RELEASE-amd64-bootonly.img bs=1k count=48000
+</code></pre>
+<p>Некоторые GNU&#47;Linux LiveCD:</p>
+<pre><code class="language-bash">%cd &#47;var&#47;data&#47;tftp&#47;data&#38;&#38; sudo mkdir linux&#38;&#38;cd linux
+%sudo fetch http:&#47;&#47;distro.ibiblio.org&#47;pub&#47;linux&#47;distributions&#47;tinycorelinux&#47;2.x&#47;release&#47;tinycore-current.iso
+%sudo mdconfig -f tinycore-current.iso -u 0
+%sudo mount_cd9660 &#47;dev&#47;md0 &#47;cdrom&#47;
+%sudo mkdir tinycore
+%sudo cp &#47;cdrom&#47;boot&#47;tinycore.gz tinycore&#47;
+%sudo cp &#47;cdrom&#47;boot&#47;bzImage tinycore&#47;
+%sudo umount &#47;cdrom&#47; &#38;&#38; mdconfig -d -u 0
+%sudo fetch http:&#47;&#47;cdnetworks-kr-1.dl.sourceforge.net&#47;project&#47;systemrescuecd&#47;sysresccd-x86&#47;1.3.5&#47;systemrescuecd-x86-1.3.5.iso
+%sudo mdconfig -f systemrescuecd-x86-1.3.5.iso -u 0
+%sudo mount_cd9660 &#47;dev&#47;md0 &#47;cdrom&#47;
+%sudo mkdir systemrescuecd
+%sudo cp &#47;cdrom&#47;sysrcd.* systemrescuecd&#47;
+%sudo cp &#47;cdrom&#47;isolinux&#47;rescue* systemrescuecd&#47;
+%sudo cp &#47;cdrom&#47;isolinux&#47;altker* systemrescuecd&#47;
+%sudo cp &#47;cdrom&#47;isolinux&#47;initram.igz systemrescuecd&#47;
+%sudo cp &#47;cdrom&#47;bootdisk&#47;* ..&#47;tools&#47;
+%sudo cp -R &#47;cdrom&#47;ntpasswd ..&#47;tools&#47;
+%sudo umount &#47;cdrom&#47; &#38;&#38; mdconfig -d -u 0
+</code></pre>
+<p>Антивирусы:</p>
+<pre><code class="language-bash">%cd ..&#47; &#38;&#38; sudo mkdir -p antivir&#47;drweb
+%sudo fetch ftp:&#47;&#47;ftp.drweb.com&#47;pub&#47;drweb&#47;livecd&#47;minDrWebLiveCD-5.0.1.iso
+%sudo mdconfig -f minDrWebLiveCD-5.0.1.iso -u 0
+%sudo mount_cd9660 &#47;dev&#47;md0 &#47;cdrom&#47;
+%sudo cp -v &#47;cdrom&#47;boot&#47;{initrd,vmlinuz} antivir&#47;drweb&#47;
+%sudo chmod 644 data&#47;antivir&#47;drweb&#47;initrd
+%sudo cp cp -R &#47;cdrom&#47;boot&#47;module antivir&#47;drweb&#47;
+%sudo chmod 644 data&#47;antivir&#47;drweb&#47;module&#47;*
+
+%sudo fetch http:&#47;&#47;devbuilds.kaspersky-labs.com&#47;devbuilds&#47;RescueDisk&#47;kav_rescue_2008.iso
+%sudo mdconfig -f kav_rescue_2008.iso -u 0
+%sudo mount_cd9660 &#47;dev&#47;md0 &#47;cdrom&#47;
+%sudo mkdir antivir&#47;kav
+%sudo cp &#47;cdrom&#47;isolinux&#47;rescue* antivir&#47;kav&#47;
+%sudo cp &#47;cdrom&#47;image.squashfs antivir&#47;kav&#47;
+%sudo fetch ftp:&#47;&#47;anti-virus.by&#47;pub&#47;vbarescue.iso
+%sudo mdconfig -f vbarescue.iso -u 0
+%sudo mount_cd9660 &#47;dev&#47;md0 &#47;cdrom
+</code></pre>
+<p>Добовляем строки в &#47;etc&#47;rc.conf :</p>
+<pre><code class="language-bash">tftpd_enable="YES"
+tftpd_datadir="&#47;var&#47;data&#47;tftp"
+tftpd_flags="--ipv4 -s"
+</code></pre>
+<p>Правим &#47;usr&#47;local&#47;etc&#47;dhcpd.conf :</p>
+<pre><code class="language-bash">subnet 192.168.3.0 netmask 255.255.255.0 {
+        range 192.168.3.20 192.168.3.255;
+        option routers 192.168.3.100;
+        filename "gpxelinux.0";
+        }
+$sudo &#47;usr&#47;local&#47;etc&#47;rc.d&#47;isc-dhcpd restart
+$sudo &#47;etc&#47;rc.d&#47;inetd restart
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

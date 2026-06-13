@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SiS 190/192 в FreeBSD * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>SiS 190/192 в FreeBSD</h2>
+    <ul class="post-info">
+      <li>Date: 24 Jan 2010</li>
+      
+      <li>Tagged with: <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/kernel/">kernel</a>, <a href="/tags/network/">network</a>, <a href="/tags/driver/">driver</a>, <a href="/tags/module/">module</a>, <a href="/tags/sis/">SIS</a></li>
+    </ul>
+  </header>
+  <p>Скачиваем драйвер:</p>
+<pre><code class="language-bash">%wget -c http:&#47;&#47;pohoyda.gmxhome.de&#47;sis190-freebsd-7.tar.gz
+%tar xzf sis190-freebsd-7.tar.gz
+</code></pre>
+<p>Под <a href="http://www.freebsd.org/">FreeBSD</a> 7 не пробовал, но под <a href="http://www.freebsd.org/">FreeBSD</a> 8 пришлось сделать патчь:</p>
+<pre><code class="language-diff">--- if_sis19x.c.orig    2008-04-23 11:53:14.000000000 +0800
++++ if_sis19x.c 2010-01-24 00:06:43.000000000 +0700
+@@ -92,13 +92,14 @@ MODULE_DEPEND(sis, miibus, 1, 1, 1);
+  *&#47;
+   static struct sis_type sis19x_devs[] = {
+    { SIS_VENDORID, SIS_DEVICEID_190, "SiS 190 10&#47;100BaseTX" },
++   { SIS_VENDORID, SIS_DEVICEID_191, "SiS 190 10&#47;100BaseTX" },
+    { 0, 0, NULL }
+     };
+     static int sis_probe       (device_t);
+     static int sis_attach      (device_t);
+     static int sis_detach      (device_t);
+     -static void sis_shutdown  (device_t);
+     +static int sis_shutdown       (device_t);
+     
+     static int sis_miibus_readreg  (device_t, int, int);
+     static int sis_miibus_writereg (device_t, int, int, int);
+@@ -621,12 +622,14 @@ sis_attach(dev)
+        MTX_DEF | MTX_RECURSE);
+         callout_init_mtx(&#38;sc-&#62;sis_stat_ch, &#38;sc-&#62;sis_mtx, 0);
+-   if (pci_get_device(dev) != SIS_DEVICEID_190) {
+-       error = ENXIO;
++   if (pci_get_device(dev) == SIS_DEVICEID_190)
++       sc-&#62;sis_type = SIS_TYPE_190;
++   else if (pci_get_device(dev) == SIS_DEVICEID_191)
++       sc-&#62;sis_type = SIS_TYPE_190;
++   else {
++       error =ENXIO;
+        goto fail;  }
+-
+-   sc-&#62;sis_type = SIS_TYPE_190;
+    sc-&#62;sis_rev = pci_read_config(dev, PCIR_REVID, 1);
+    
+    &#47;*
+@@ -885,8 +888,9 @@ sis_detach(dev)
+ &#47;*
+  * Stop all chip I&#47;O so that the kernel&#39;s probe routines don&#39;t
+  * get confused by errant DMAs when rebooting.
+- *
+-static void
++*&#47;
++
++static int
+ sis_shutdown(dev)
+    device_t        dev;
+ {
+@@ -898,6 +902,7 @@ sis_shutdown(dev)
+    sis_reset(sc);
+    sis_stop(sc);
+    SIS_UNLOCK(sc);
++   return (0);
+}
+</code></pre>
+<p>Сохраним его в file.patch и поропатчим исходники:</p>
+<pre><code class="language-bash">%cd sis190-freebsd-7;patch -p0 &#60; ..&#47;file.patch
+</code></pre>
+<p>PS: Этот патчь УГ. Я не программист, и за этого получилось криво. Причем постоянно задержки.
+В messages летит куча хлама такого вида: </p>
+<pre><code class="language-bash">sis19x0: watchdog timeout
+sis19x0: watchdog timeout
+sis19x0: error_bits=0x40020001
+sis19x0: watchdog timeout
+sis19x0: watchdog timeout
+sis19x0: watchdog timeout
+sis19x0: watchdog timeout
+sis19x0: watchdog timeout
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

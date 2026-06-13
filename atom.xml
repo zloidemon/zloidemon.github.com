@@ -1,0 +1,722 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>VG&apos;s blog</title>
+  <id>http://zlonet.ru/</id>
+  <updated>2026-06-13T21:28:15Z</updated>
+  <author>
+    <name>Veniamin Gvozdikov</name>
+    <email>vg@FreeBSD.org</email>
+  </author>
+  <entry>
+    <title>Quick introduction to Tarantool</title>
+    <link href="http://zlonet.ru/page/quick-introduction-to-tarantool/"/>
+    <id>http://zlonet.ru/page/quick-introduction-to-tarantool</id>
+    <updated>2015-08-30T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;Let&amp;#8217;s start to install &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt; on FreeBSD 10.X from ports tree.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Quick introduction to Tarantool&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 30 Aug 2015&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/tarantool/&quot;&gt;tarantool&lt;/a&gt;, &lt;a href=&quot;/tags/freebsd/&quot;&gt;FreeBSD&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;Let&amp;#8217;s start to install &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt; on FreeBSD 10.X from ports tree.&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/3ns6vx5sijzqk4jggvkbdgdgf&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/3ns6vx5sijzqk4jggvkbdgdgf.png&quot; alt=&quot;asciicast&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Getting started&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/25723&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/25723.png&quot; alt=&quot;asciicast&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Access to console&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/25724&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/25724.png&quot; alt=&quot;asciicast&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Connection between tarantools&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/25725&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/25725.png&quot; alt=&quot;asciicast&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Change delimiter&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/25727&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/25727.png&quot; alt=&quot;asciicast&quot; /&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Python3 asyncio driver&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;https://asciinema.org/a/25733&quot;&gt;&lt;img src=&quot;https://asciinema.org/a/25733.png&quot; alt=&quot;asciicast&quot; /&gt;&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>  <entry>
+    <title>DTrace integration features</title>
+    <link href="http://zlonet.ru/page/dtrace-integration-features/"/>
+    <id>http://zlonet.ru/page/dtrace-integration-features</id>
+    <updated>2013-09-29T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I&amp;#8217;ll explain my troubles and approach to fixing bugs in &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt;, a no-sql DB, with common instruments.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;DTrace integration features&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 29 Sep 2013&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/dtrace/&quot;&gt;DTrace&lt;/a&gt;, &lt;a href=&quot;/tags/tarantool/&quot;&gt;tarantool&lt;/a&gt;, &lt;a href=&quot;/tags/freebsd/&quot;&gt;FreeBSD&lt;/a&gt;, &lt;a href=&quot;/tags/linux/&quot;&gt;Linux&lt;/a&gt;, &lt;a href=&quot;/tags/solaris/&quot;&gt;Solaris&lt;/a&gt;, &lt;a href=&quot;/tags/osx/&quot;&gt;OSX&lt;/a&gt;, &lt;a href=&quot;/tags/kernel/&quot;&gt;kernel&lt;/a&gt;, &lt;a href=&quot;/tags/c/&quot;&gt;C&lt;/a&gt;, &lt;a href=&quot;/tags/cmake/&quot;&gt;CMake&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;This post explores my troubles with integrating DTrace in projects. I spent a few days searching for and fixing bugs in DTrace. I&amp;#8217;ll explain my troubles and approach to fixing bugs in &lt;a href=&quot;http://tarantool.org&quot; title=&quot;The Tarantool project&quot;&gt;tarantool&lt;/a&gt;, a no-sql DB, with common instruments.&lt;/p&gt;
+&lt;p&gt;This post isn&amp;#8217;t yet complete. I&amp;#8217;ll add new information after fix&amp;#47;found bugs.&lt;/p&gt;
+&lt;h2 id=&quot;instruments-to-research&quot;&gt;Instruments to research:&lt;/h2&gt;
+&lt;p&gt;OSs:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;FreeBSD 9.1-RELEASE-p7&lt;/li&gt;
+&lt;li&gt;Darwin 12.5.0&lt;/li&gt;
+&lt;li&gt;Linux 3.8.13-16.el6uek.x86_64 (Oracle Linux)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Solaris based:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;OpenIndiana 151a8 (so old compilers)&lt;/li&gt;
+&lt;li&gt;Oracle Linux 11.1 (so old compilers)&lt;/li&gt;
+&lt;li&gt;SmartOS latest (all stuff got coredump)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;DTrace Versions:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;dtrace: Sun D 1.7 (FreeBSD)&lt;/li&gt;
+&lt;li&gt;dtrace: Sun D 1.6.2 (Darwin)&lt;/li&gt;
+&lt;li&gt;dtrace: Sun D 1.6.3 (Oracle Linux)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;generate-dtrace-object-twice&quot;&gt;Generate DTrace object twice&lt;/h2&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; sudo dtrace -l -m tarantool_box
+Password:
+   ID   PROVIDER            MODULE                          FUNCTION NAME
+dtrace: failed to match :tarantool_box::: No probe matches description
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;If you have a modular application you&amp;#8217;ll try to generate many dtrace objects to link that with the application. You get static libraries and then link. This is a common approach to programming but if you use DTrace in more than one library you need run &lt;code&gt;dtrace -G&lt;/code&gt; to get one dtrace object which include all providers.&lt;/p&gt;
+&lt;p&gt;After the first time you get a dtrace object with correct information but you would like to get object for all providers in different libs in one object. I&amp;#8217;ll explain the main issue with second generation with an example.&lt;/p&gt;
+&lt;p&gt;This is an example with one library. You are able to do this on the command line for getting incorrect object because you did correct object before with information about one: ***&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; dtrace -G -s ..&amp;#47;..&amp;#47;include&amp;#47;dtrace.d ..&amp;#47;CMakeFiles&amp;#47;cjson.dir&amp;#47;third_party&amp;#47;lua-cjson&amp;#47;lua_cjson.c.o -o cjson_dtrace_second.o
+
+%&amp;#62; md5 cjson_dtrace.o
+MD5 (cjson_dtrace.o) = 69cc9d1037f106e682464af05205458c
+%&amp;#62; md5 cjson_dtrace_second.o
+MD5 (cjson_dtrace_second.o) = a42c72ae540be068243936afe2d7b868
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;On above list you see mismatched md5 sums. When I found that I started fire to drill-down to object files and look at what&amp;#8217;s incorrect.&lt;/p&gt;
+&lt;p&gt;I got 2 dtrace objects, Using the &lt;code&gt;strings&lt;/code&gt; command I found the differences:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; strings -a cjson_dtrace_second.o &amp;#62; dtrace_second
+%&amp;#62; strings -a cjson_dtrace.o &amp;#62; dtrace
+&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; diff -up dtrace dtrace_second
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;I saw removed functions with dtrace defines for a trace.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-diff&quot;&gt;--- dtrace  2013-09-27 13:47:17.839671510 +0000
++++ dtrace_second   2013-09-27 13:47:08.717669720 +0000
+@@ -117,15 +117,10 @@ vfprintf
+ encode-done
+ char *
+ char *
+-json_encode
+-$dtrace140912.json_encode
+ encode-start
+ char *
+ char *
+-json_encode
+-$dtrace140912.json_encode
+ new-entry
+-luaopen_cjson
+ tick-start
+ tick-stop
+ tarantool
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In the next stage I looked inside &lt;code&gt;.SUNW_dof&lt;/code&gt; in section of dtrace object file.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; objdump -s -j .SUNW_dof cjson_dtrace.o
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This is correct hex output from dtrace object:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-text&quot;&gt;cjson_dtrace.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0270 00000000 00000000 00000000 05000000  ................
+ 0280 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 0290 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 02a0 63686172 202a006a 736f6e5f 656e636f  char *.json_enco
+ 02b0 64650024 64747261 63653134 30393132  de.$dtrace140912
+ 02c0 2e6a736f 6e5f656e 636f6465 00656e63  .json_encode.enc
+ 02d0 6f64652d 73746172 7400696e 74006368  ode-start.int.ch
+ 02e0 6172202a 00696e74 00636861 72202a00  ar *.int.char *.
+ 02f0 6a736f6e 5f656e63 6f646500 24647472  json_encode.$dtr
+ 0300 61636531 34303931 322e6a73 6f6e5f65  ace140912.json_e
+ 0310 6e636f64 65006e65 772d656e 74727900  ncode.new-entry.
+ 0320 6c75616f 70656e5f 636a736f 6e007469  luaopen_cjson.ti
+ 0330 636b2d73 74617274 00696e74 00696e74  ck-start.int.int
+ 0340 00746963 6b2d7374 6f700069 6e740069  .tick-stop.int.i
+ 0350 6e740074 6172616e 746f6f6c 00000000  nt.tarantool....
+ 0360 53756e20 4420312e 37004672 65654253  Sun D 1.7.FreeBS
+ 0370 44000000 00000000 00000000 00000000  D...............
+ 0380 00000000 00000000 00000000 00000000  ................
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Drill-down to next &lt;code&gt;incorrect&lt;/code&gt; object:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; objdump -s -j .SUNW_dof cjson_dtrace_second.o
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In &lt;code&gt;.SUNW_dof&lt;/code&gt; sect I saw empty dtrace providers for tracing function:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-text&quot;&gt;cjson_dtrace_second.o:     file format elf64-x86-64-freebsd
+
+Contents of section .SUNW_dof:
+ 0190 00000000 00000000 00000000 05000000  ................
+ 01a0 01000000 00656e63 6f64652d 646f6e65  .....encode-done
+ 01b0 00696e74 00636861 72202a00 696e7400  .int.char *.int.
+ 01c0 63686172 202a0065 6e636f64 652d7374  char *.encode-st
+ 01d0 61727400 696e7400 63686172 202a0069  art.int.char *.i
+ 01e0 6e740063 68617220 2a006e65 772d656e  nt.char *.new-en
+ 01f0 74727900 7469636b 2d737461 72740069  try.tick-start.i
+ 0200 6e740069 6e740074 69636b2d 73746f70  nt.int.tick-stop
+ 0210 00696e74 00696e74 00746172 616e746f  .int.int.taranto
+ 0220 6f6c0000 00000000 53756e20 4420312e  ol......Sun D 1.
+ 0230 37004672 65654253 44000000 00000000  7.FreeBSD.......
+ 0240 00000000 00000000 00000000 00000000  ................
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The next step is finding differences in library objects. After running &lt;code&gt;dtrace -G&lt;/code&gt; twice I get these changes in main library objects:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; md5 lua_cjson.c.o
+MD5 (lua_cjson.c.o) = bdc0afbb0869f7bee70c29a7ba538127
+%&amp;#62; md5 lua_cjson.c.o.dtrace
+MD5 (lua_cjson.c.o.dtrace) = 0d65212c87350dceb64f71429b72ce3b
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;I looked at the &lt;code&gt;.text&lt;/code&gt; section of the object file in &lt;code&gt;objdump&lt;/code&gt; because this section contains the executible code.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-sh&quot;&gt;%&amp;#62; objdump -d -j .text lua_cjson.c.o.dtrace &amp;#62; dtrace
+%&amp;#62; objdump -d -j .text lua_cjson.c.o &amp;#62; non-dtrace
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;section class=&quot;container footer-nav&quot;&gt;
+      &lt;p&gt;&lt;/p&gt;
+    &lt;/section&gt;
+    &lt;p class=&quot;container footer-credit&quot;&gt;
+      copyright &amp;copy; 2013 Veniamin Gvozdikov
+    &lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;</content>
+  </entry>  <entry>
+    <title>Installing a FusionInventory to FreeBSD</title>
+    <link href="http://zlonet.ru/page/installing-a-fusioninventory-to-freebsd/"/>
+    <id>http://zlonet.ru/page/installing-a-fusioninventory-to-freebsd</id>
+    <updated>2011-02-18T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;Hi everybody!
+This is simple how to install fusioninventory to &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt;. I missed steps with install a DB.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Installing a FusionInventory to FreeBSD&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 18 Feb 2011&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/fusioninventory/&quot;&gt;FusionInventory&lt;/a&gt;, &lt;a href=&quot;/tags/freebsd/&quot;&gt;FreeBSD&lt;/a&gt;, &lt;a href=&quot;/tags/nginx/&quot;&gt;Nginx&lt;/a&gt;, &lt;a href=&quot;/tags/ports/&quot;&gt;ports&lt;/a&gt;, &lt;a href=&quot;/tags/php/&quot;&gt;PHP&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;Hi everybody!
+This is simple how to install fusioninventory to &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt;. I missed steps with install a DB.&lt;/p&gt;
+&lt;p&gt;I have:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;% uname -sr
+FreeBSD 8.1-RELEASE
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;I like ports tree :) We will install glpi and plugin from a ports tree &lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$portmaster www&amp;#47;nginx www&amp;#47;glpi
+$echo nginx_enable=\&quot;YES\&quot;&amp;#62;&amp;#62;&amp;#47;etc&amp;#47;rc.conf
+$echo php_fpm_enable=\&quot;YES\&quot;&amp;#62;&amp;#62;&amp;#47;etc&amp;#47;rc.conf
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;You are can get a &lt;a href=&quot;http://www.freebsd.org/cgi/query-pr.cgi?pr=ports/154867&quot;&gt;port&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;And then try a few steps :-P&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$sh shar-1.sh
+$make -C glpi-plugins-fusioninventory-server&amp;#47; install clean
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This is my configuration file for a &lt;a href=&quot;http://www.nginx.org/&quot;&gt;nginx&lt;/a&gt; virtual host with glpi&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-nginx&quot;&gt;server {
+    listen       80;
+    server_name  glpi;
+    #    charset utf-8;
+    #access_log  logs&amp;#47;host.access.log  main;
+    access_log &amp;#47;var&amp;#47;log&amp;#47;nginx.glpi.log;
+    error_log &amp;#47;var&amp;#47;log&amp;#47;nginx.error.glpi.log;
+    location &amp;#47; {
+        root   &amp;#47;usr&amp;#47;local&amp;#47;www&amp;#47;glpi;
+        index  index.php index.html index.htm;
+    }
+    #error_page  404              &amp;#47;404.html;
+    # redirect server error pages to the static page &amp;#47;50x.html
+    #
+    error_page   500 502 503 504  &amp;#47;50x.html;
+    location = &amp;#47;50x.html {
+        root   &amp;#47;usr&amp;#47;local&amp;#47;www&amp;#47;nginx-dist;
+    }
+    location ~* \.php$ {
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME &amp;#47;usr&amp;#47;local&amp;#47;www&amp;#47;glpi$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Now need create a log files and then start services&amp;#8230;.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$touch &amp;#47;var&amp;#47;log&amp;#47;nginx.glpi.log
+$touch &amp;#47;var&amp;#47;log&amp;#47;nginx.error.glpi.log
+$&amp;#47;usr&amp;#47;local&amp;#47;etc&amp;#47;rc.d&amp;#47;php-fpm start
+$&amp;#47;usr&amp;#47;local&amp;#47;etc&amp;#47;rc.d&amp;#47;nginx start
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Done. go to your glpi and activate plugin.&lt;/p&gt;</content>
+  </entry>  <entry>
+    <title>Nginx with Perl and OTRS</title>
+    <link href="http://zlonet.ru/page/nginxperlotrs/"/>
+    <id>http://zlonet.ru/page/nginx-with-perl-and-otrs</id>
+    <updated>2011-02-18T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;Hi everybody!
+I like &lt;a href=&quot;http://www.nginx.org/&quot;&gt;nginx&lt;/a&gt;. It&amp;#8217;s a fast web server! But I need using otrs, without apache and mod_perl. This is my configs for it:&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Nginx with Perl and OTRS&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 18 Feb 2011&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/otrs/&quot;&gt;OTRS&lt;/a&gt;, &lt;a href=&quot;/tags/nginx/&quot;&gt;Nginx&lt;/a&gt;, &lt;a href=&quot;/tags/perl/&quot;&gt;Perl&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;Hi everybody!
+I like &lt;a href=&quot;http://www.nginx.org/&quot;&gt;nginx&lt;/a&gt;. It&amp;#8217;s a fast web server! But I need using otrs, without apache and mod_perl. This is my configs for it:&lt;/p&gt;
+&lt;p&gt;You can install otrs from freebsd ports tree and then use my configs with perl wrapper :)&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$portmaster -d devel&amp;#47;otrs www&amp;#47;nginx www&amp;#47;p5-FastCGI
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;nginx.conf&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-nginx&quot;&gt;
+server {
+    listen 80;
+    server_name localhost;
+    root &amp;#47;usr&amp;#47;local&amp;#47;otrs&amp;#47;var&amp;#47;httpd&amp;#47;htdocs;
+    access_log  &amp;#47;var&amp;#47;log&amp;#47;nginx&amp;#47;otrs.nginx_access.log;
+    index index.html;
+    location &amp;#47;otrs-web {
+        gzip on;
+        alias &amp;#47;usr&amp;#47;local&amp;#47;otrs&amp;#47;var&amp;#47;httpd&amp;#47;htdocs;
+    }
+    location ~ ^&amp;#47;otrs&amp;#47;(.*\.pl)(&amp;#47;.*)?$ {
+        gzip off; #gzip makes scripts feel slower since they have to complete before getting gzipped
+        #    fastcgi_pass  unix:&amp;#47;..sock;
+        fastcgi_pass unix:&amp;#47;var&amp;#47;run&amp;#47;perl-fcgi.sock;
+        #    fastcgi_pass  127.0.0.1:8999;
+        fastcgi_index index.pl;
+        fastcgi_param SCRIPT_FILENAME   &amp;#47;usr&amp;#47;local&amp;#47;otrs&amp;#47;bin&amp;#47;fcgi-bin&amp;#47;;
+        fastcgi_param QUERY_STRING      $query_string;
+        fastcgi_param REQUEST_METHOD    $request_method;
+        fastcgi_param CONTENT_TYPE      $content_type;
+        fastcgi_param CONTENT_LENGTH    $content_length;
+        fastcgi_param GATEWAY_INTERFACE CGI&amp;#47;1.1;
+        fastcgi_param SERVER_SOFTWARE   nginx;
+        fastcgi_param SCRIPT_NAME       $fastcgi_script_name;
+        fastcgi_param REQUEST_URI       $request_uri;
+        fastcgi_param DOCUMENT_URI      $document_uri;
+        fastcgi_param DOCUMENT_ROOT     $document_root;
+        fastcgi_param SERVER_PROTOCOL   $server_protocol;
+        fastcgi_param REMOTE_ADDR       $remote_addr;
+        fastcgi_param REMOTE_PORT       $remote_port;
+        fastcgi_param SERVER_ADDR       $server_addr;
+        fastcgi_param SERVER_PORT       $server_port;
+        fastcgi_param SERVER_NAME       $server_name;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;And you need a wrapper for use perl :) You can get it from:&lt;/p&gt;
+&lt;p&gt;copy &lt;a href=&quot;http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/fastcgi-wrapper&quot;&gt;fcgi-wrapper&lt;/a&gt;  to &amp;#47;usr&amp;#47;local&amp;#47;sbin
+copy &lt;a href=&quot;http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/perl-fcgi&quot;&gt;perl-fcgi&lt;/a&gt; to &amp;#47;usr&amp;#47;local&amp;#47;sbin&lt;/p&gt;
+&lt;p&gt;And rc.d script&lt;/p&gt;
+&lt;p&gt;&lt;a href=&quot;http://gitorious.org/zloidemon-freebsd-configs/trunk/blobs/master/scripts/perl-fcgi/perl-fcgi.rc&quot;&gt;perl-fcgi.rc&lt;/a&gt; to &amp;#47;usr&amp;#47;local&amp;#47;etc&amp;#47;rc.d&amp;#47;perl-fcgi&lt;/p&gt;
+&lt;p&gt;then add&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$echo perl_fcgi_enable=\&quot;YES\&quot; &amp;#62;&amp;#62;&amp;#47;etc&amp;#47;rc.conf
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Thanks &lt;a href=&quot;http://technotes.1000lines.net/nginx-perl-fastcgi-how-to/&quot;&gt;tech notes&lt;/a&gt;&lt;/p&gt;</content>
+  </entry>  <entry>
+    <title>Upload a file from shell to file sharing hosting</title>
+    <link href="http://zlonet.ru/page/upload-a-file-from-shell-to-file-sharing-hosting/"/>
+    <id>http://zlonet.ru/page/upload-a-file-from-shell-to-file-sharing-hosting</id>
+    <updated>2011-01-29T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;I often sharing my files with use a file hosting. :) But I don&amp;#8217;t like use a browser for it. Now I&amp;#8217;ve wrote the function for my .zshrc.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Upload a file from shell to file sharing hosting&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 29 Jan 2011&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/zalil/&quot;&gt;zalil&lt;/a&gt;, &lt;a href=&quot;/tags/upload/&quot;&gt;upload&lt;/a&gt;, &lt;a href=&quot;/tags/script/&quot;&gt;script&lt;/a&gt;, &lt;a href=&quot;/tags/shell/&quot;&gt;shell&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;I often sharing my files with use a file hosting. :) But I don&amp;#8217;t like use a browser for it. Now I&amp;#8217;ve wrote the function for my .zshrc.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;function zalil(){
+    if [ -n &quot;&quot; -a -f &quot;&quot; ];then
+        if  [ &quot;
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;section class=&quot;container footer-nav&quot;&gt;
+      &lt;p&gt;&lt;/p&gt;
+    &lt;/section&gt;
+    &lt;p class=&quot;container footer-credit&quot;&gt;
+      copyright &amp;copy; 2013 Veniamin Gvozdikov
+    &lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;</content>
+  </entry>  <entry>
+    <title>Pastebin in the ZSH</title>
+    <link href="http://zlonet.ru/page/pastebin-in-the-zsh/"/>
+    <id>http://zlonet.ru/page/pastebin-in-the-zsh</id>
+    <updated>2011-01-24T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;I&amp;#8217;ve wrote the pastebin function which I do use at the my .zshrc.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Pastebin in the ZSH&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 24 Jan 2011&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/pastebin/&quot;&gt;Pastebin&lt;/a&gt;, &lt;a href=&quot;/tags/zsh/&quot;&gt;ZSH&lt;/a&gt;, &lt;a href=&quot;/tags/sript/&quot;&gt;sript&lt;/a&gt;, &lt;a href=&quot;/tags/sheel/&quot;&gt;sheel&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;I&amp;#8217;ve wrote the pastebin function which I do use at the my .zshrc.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;function pastebin(){
+    fload(){
+        TFILE=
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;section class=&quot;container footer-nav&quot;&gt;
+      &lt;p&gt;&lt;/p&gt;
+    &lt;/section&gt;
+    &lt;p class=&quot;container footer-credit&quot;&gt;
+      copyright &amp;copy; 2013 Veniamin Gvozdikov
+    &lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;</content>
+  </entry>  <entry>
+    <title>The JunOS installation script</title>
+    <link href="http://zlonet.ru/page/the-junos-installation-script/"/>
+    <id>http://zlonet.ru/page/the-junos-installation-script</id>
+    <updated>2011-01-08T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;I don&amp;#8217;t like installing manually&amp;#8230; So I&amp;#8217;ve written a script for it. This is an autoamtic installation script for the JunOS olive for which you need to be using a version of &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; &amp;#60; 8.  &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; 8 is not supported.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;The JunOS installation script&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 08 Jan 2011&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/junos/&quot;&gt;JunOS&lt;/a&gt;, &lt;a href=&quot;/tags/juniper/&quot;&gt;Juniper&lt;/a&gt;, &lt;a href=&quot;/tags/freebsd/&quot;&gt;FreeBSD&lt;/a&gt;, &lt;a href=&quot;/tags/shell/&quot;&gt;shell&lt;/a&gt;, &lt;a href=&quot;/tags/script/&quot;&gt;script&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;I don&amp;#8217;t like installing manually&amp;#8230; So I&amp;#8217;ve written a script for it. This is an autoamtic installation script for the JunOS olive for which you need to be using a version of &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; &amp;#60; 8.  &lt;a href=&quot;http://www.freebsd.org/&quot;&gt;FreeBSD&lt;/a&gt; 8 is not supported.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;#!&amp;#47;bin&amp;#47;sh
+FILE=&amp;#39;jinstall-10.4R1.9-domestic-signed.tgz&amp;#39;
+HASH=649006003c9773859882411246405a39
+UNTAR=&amp;#39;tar zxf&amp;#39;
+TAR=&amp;#39;tar zcf&amp;#39;
+WORK=tmp
+
+work (){
+    if [ -d $WORK ]; then
+        rm -fr $WORK
+    fi
+    mkdir -p $WORK
+    cd $WORK
+}
+
+dwork (){
+    cd ..&amp;#47;;rm -fr $WORK
+}
+if [ 
+  &lt;/main&gt;
+
+  &lt;footer&gt;
+    &lt;section class=&quot;container footer-nav&quot;&gt;
+      &lt;p&gt;&lt;/p&gt;
+    &lt;/section&gt;
+    &lt;p class=&quot;container footer-credit&quot;&gt;
+      copyright &amp;copy; 2013 Veniamin Gvozdikov
+    &lt;/p&gt;
+  &lt;/footer&gt;
+&lt;/body&gt;</content>
+  </entry>  <entry>
+    <title>Установка junos 10 на PC</title>
+    <link href="http://zlonet.ru/page/ustanovka-junos-10-na-pc/"/>
+    <id>http://zlonet.ru/page/junos-10-pc</id>
+    <updated>2010-07-03T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;Устанавливал JunOS я непосредственно в 7.3-RELEASE-i386-bootonly.iso.
+Первое на что нужно обратить внимание, так это на разделение slice на partition. Если не создавать partition &amp;#47;tmp, то возникает ошибка об нехватке свободного места на носителе md1, который в свою очередь имеет объём 160Mb.&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Установка junos 10 на PC&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 03 Jul 2010&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/junos/&quot;&gt;JunOS&lt;/a&gt;, &lt;a href=&quot;/tags/juniper/&quot;&gt;Juniper&lt;/a&gt;, &lt;a href=&quot;/tags/freebsd/&quot;&gt;FreeBSD&lt;/a&gt;, &lt;a href=&quot;/tags/diff/&quot;&gt;diff&lt;/a&gt;, &lt;a href=&quot;/tags/patch/&quot;&gt;patch&lt;/a&gt;, &lt;a href=&quot;/tags/boot/&quot;&gt;boot&lt;/a&gt;, &lt;a href=&quot;/tags/kernel/&quot;&gt;kernel&lt;/a&gt;, &lt;a href=&quot;/tags/sysctl/&quot;&gt;sysctl&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;Устанавливал JunOS я непосредственно в 7.3-RELEASE-i386-bootonly.iso.
+Первое на что нужно обратить внимание, так это на разделение slice на partition. Если не создавать partition &amp;#47;tmp, то возникает ошибка об нехватке свободного места на носителе md1, который в свою очередь имеет объём 160Mb.&lt;/p&gt;
+&lt;p&gt;Нужно установить минимальную версию FreeBSD на носитель, и приступить к созданию модифицированного пакета.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$cd &amp;#47;var&amp;#47;tmp
+Кладем package сюда удобным для вас способом.... И приступаем к модификации.
+$mkdir blah;cd blah;tar zxvf ..&amp;#47;jinstall-10.1R1.8-domestic-signed.tgz
+$mkdir blah;cd blah;tar zxvf ..&amp;#47;jinstall-10.1R1.8-domestic.tgz
+
+$mkdir blah;cd blah;tar zxvf ..&amp;#47;pkgtools.tgz
+$cp -v &amp;#47;usr&amp;#47;bin&amp;#47;true bin&amp;#47;checkpic
+
+$tar zcvf ..&amp;#47;pkgtools.tgz *
+$cd ..&amp;#47;;rm -rf blah
+$tar zcfv &amp;#47;var&amp;#47;tmp&amp;#47;jinstall-10.1R1.8-domestic.tgz *
+Устанавливаем:
+$pkg_add -f jinstall-10.1R1.8-domestic.tgz
+$echo console=\&quot;vidconsole\&quot;&amp;#62;&amp;#62;&amp;#47;boot&amp;#47;loader.conf;reboot
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Ожидаем окончания установки и радуемся:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;root@%cli
+root&amp;#62;show version
+Model: olive
+JUNOS Base OS boot [10.1R1.8]
+JUNOS Base OS Software Suite [10.1R1.8]
+JUNOS Kernel Software Suite [10.1R1.8]
+JUNOS Crypto Software Suite [10.1R1.8]
+JUNOS Packet Forwarding Engine Support (M&amp;#47;T Common) [10.1R1.8]
+JUNOS Packet Forwarding Engine Support (M20&amp;#47;M40) [10.1R1.8]
+JUNOS Online Documentation [10.1R1.8]
+JUNOS Voice Services Container package [10.1R1.8]
+JUNOS Border Gateway Function package [10.1R1.8]
+JUNOS Services AACL Container package [10.1R1.8]
+JUNOS Services LL-PDF Container package [10.1R1.8]
+JUNOS Services Stateful Firewall [10.1R1.8]
+JUNOS AppId Services [10.1R1.8]
+JUNOS IDP Services [10.1R1.8]
+JUNOS Routing Software Suite [10.1R1.8]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;PS:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;В internet полно трактатов по установке olive на PC, но там старые версии, и для них не нужно создавать partition &amp;#47;tmp в slice.&lt;/li&gt;
+&lt;li&gt;HDD обязательно должен иметь имя ad0[s]X, либо нужно делать symlinks.&lt;/li&gt;
+&lt;li&gt;Минимальный объём оперативной памяти 512M, но потом можно вставить HDD после установки в другой системный блок. Я использую junos на 256M, но заметны проблемы при запуске cli и других команд.&lt;/li&gt;
+&lt;/ol&gt;</content>
+  </entry>  <entry>
+    <title>Kaspersky Rescue 10 PXE</title>
+    <link href="http://zlonet.ru/page/kaspersky-rescue-10-pxe/"/>
+    <id>http://zlonet.ru/page/kaspersky-rescue-10-pxe</id>
+    <updated>2010-05-27T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;&lt;strong&gt;Depends on squashfs-tools &amp;#62; 3!&lt;/strong&gt;&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Kaspersky Rescue 10 PXE&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 27 May 2010&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/pxe/&quot;&gt;PXE&lt;/a&gt;, &lt;a href=&quot;/tags/kaspersky/&quot;&gt;Kaspersky&lt;/a&gt;, &lt;a href=&quot;/tags/rescue/&quot;&gt;rescue&lt;/a&gt;, &lt;a href=&quot;/tags/boot/&quot;&gt;boot&lt;/a&gt;, &lt;a href=&quot;/tags/antivirus/&quot;&gt;antivirus&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;&lt;strong&gt;Depends on squashfs-tools &amp;#62; 3!&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Patch patch-PXE-kav&lt;em&gt;rescue&lt;/em&gt;10.iso.patch&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-diff&quot;&gt;--- sbin&amp;#47;dmsquash-live-root.orig    2014-01-05 21:26:33.581580759 +0400
++++ sbin&amp;#47;dmsquash-live-root 2014-01-06 21:42:30.159646123 +0400
+@@ -46,9 +46,7 @@ fi
+ 
+ # determine filesystem type for a filesystem image
+ det_img_fs() {
+-    local _img=&quot;&quot; _loop=$(losetup -f) _fs
+-    losetup $_loop $_img; _fs=$(det_fs $_loop); losetup -d $_loop
+-    echo $_fs
++    echo squashfs
+ }
+ 
+ for arg in $CMDLINE; do case $arg in ro|rw) liverw=$arg ;; esac; done
+@@ -62,7 +60,6 @@ if [ -f $livedev ]; then
+         auto) die &quot;cannot mount live image (unknown filesystem type)&quot; ;;
+         *) FSIMG=$livedev ;;
+     esac
+-else
+     mount -n -t $fstype -o ${liverw:-ro} $livedev &amp;#47;run&amp;#47;initramfs&amp;#47;live
+     if [ &quot;$?&quot; != &quot;0&quot; ]; then
+         die &quot;Failed to mount block device of live image&quot;
+--- init.orig   2014-01-05 21:26:33.571246205 +0400
++++ init    2014-01-06 19:55:26.324595021 +0400
+@@ -288,7 +288,7 @@ unset main_loop
+ unset RDRETRY
+ 
+ if  ! ismounted &quot;&amp;#47;run&amp;#47;initramfs&amp;#47;live&quot;; then
+-    CDROM_DEVICES=&quot;&amp;#47;dev&amp;#47;sr*&quot;
++    CDROM_DEVICES=&quot;&amp;#47;image.squashfs&quot;
+     for i in $CDROM_DEVICES
+     do
+         &amp;#47;sbin&amp;#47;dmsquash-live-root $i
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Build instructions:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$mdconfig -f kav_rescue_10.iso
+$mountcd_9660 &amp;#47;dev&amp;#47;md0 &amp;#47;cdrom
+$cp -v &amp;#47;cdrom&amp;#47;boot&amp;#47;rescue .
+$mkdir image &amp;#38;&amp;#38; cd image
+$lzcat -S lz &amp;#47;cdrom&amp;#47;boot&amp;#47;rescue.igz | cpio -id
+$patch -p0&amp;#60;..&amp;#47;..&amp;#47;patch-PXE-kav_rescue_10.iso.patch
+$mkdir cdrom &amp;#38;&amp;#38; cp -R &amp;#47;cdrom&amp;#47;rescue cdrom&amp;#47;
+$mksquashfs cdrom image.squashfs &amp;#38;&amp;#38; rm -fr cdrom
+$find . -print | cpio -o -H newc | lzma -c &amp;#62; &amp;#47;usr&amp;#47;local&amp;#47;tftp&amp;#47;rescue.igz &amp;#38;&amp;#38; cd ..&amp;#47; &amp;#38;&amp;#38; rm -fr image&amp;#47;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Example config pxe:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-ini&quot;&gt;label kav
+kernel &amp;#47;rescue
+append initrd=&amp;#47;rescue.igz root=live rootfstype=auto vga=791 init=&amp;#47;init kav_lang=ru udev liveimg doscsi nomodeset
+
+label kav_text
+kernel &amp;#47;rescue
+append initrd=&amp;#47;rescue.igz root=live rootfstype=auto vga=791 init=&amp;#47;init kav_lang=ru udev liveimg nox kavshell noresume doscsi nomodeset
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Files: &lt;a href=&quot;http://storage.zlonet.ru/kav/20140106/rescue&quot;&gt;kernel&lt;/a&gt; and &lt;a href=&quot;http://storage.zlonet.ru/kav/20140106/rescue.igz&quot;&gt;initrd&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;em&gt;DEPRECATED&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Patch patch-PXE&lt;em&gt;kav&lt;/em&gt;rescue_2010.iso.patch&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-diff&quot;&gt;--- init.orig   2010-05-24 21:40:35.000000000 +0800
++++ init    2010-05-25 16:07:38.000000000 +0800
+@@ -399,7 +399,7 @@ fi
+ 
+ # Determine root device
+ good_msg &amp;#39;Determining root device...&amp;#39;
+-while true
++while false
+ do
+    while [ &quot;${got_good_root}&quot; != &amp;#39;1&amp;#39; ]
+    do
+@@ -462,6 +462,8 @@ do
+        fi
+    done
+ 
++REAL_ROOT=&amp;#47;image.squashfs
++REAL_ROOT_TYPE=squashfs
+ 
+    if [ &quot;${CDROOT}&quot; = 1 -a &quot;${got_good_root}&quot; = &amp;#39;1&amp;#39; -a &quot;${REAL_ROOT}&quot; != &quot;&amp;#47;dev&amp;#47;nfs&quot; ]
+    then
+@@ -521,7 +523,6 @@ then
+    [ -z &quot;${LOOP}&quot; ] &amp;#38;&amp;#38; find_loop
+    [ -z &quot;${LOOPTYPE}&quot; ] &amp;#38;&amp;#38; find_looptype
+ 
+-   cache_cd_contents
+ 
+    # If encrypted, find key and mount, otherwise mount as usual
+    if [ -n &quot;${CRYPT_ROOT}&quot; ]
+@@ -557,7 +558,8 @@ then
+        elif [ &quot;${LOOPTYPE}&quot; = &amp;#39;squashfs&amp;#39; ]
+        then
+            good_msg &amp;#39;Mounting squashfs filesystem&amp;#39;
+-           mount -t squashfs -o loop,ro &quot;${NEW_ROOT}&amp;#47;mnt&amp;#47;cdrom&amp;#47;${LOOPEXT}${LOOP}&quot; &quot;${NEW_ROOT}&amp;#47;mnt&amp;#47;livecd&quot;
++           mount -t squashfs -o loop,ro &amp;#47;${LOOP} ${NEW_ROOT}&amp;#47;mnt&amp;#47;livecd
++           mount -t squashfs -o loop,rw &amp;#47;cdrom.squashfs ${NEW_ROOT}&amp;#47;mnt&amp;#47;cdrom
+            test_success &amp;#39;Mount filesystem&amp;#39;
+            FS_LOCATION=&amp;#39;mnt&amp;#47;livecd&amp;#39;
+        elif [ &quot;${LOOPTYPE}&quot; = &amp;#39;gcloop&amp;#39; ]
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Build instructions:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;# Downloading files....
+$wget -c http:&amp;#47;&amp;#47;devbuilds.kaspersky-labs.com&amp;#47;devbuilds&amp;#47;RescueDisk10&amp;#47;kavrescue10.iso
+# Installing needed stuff
+$sudo make -C &amp;#47;usr&amp;#47;ports&amp;#47;archivers&amp;#47;gcpio install clean
+$sudo make -C &amp;#47;usr&amp;#47;ports&amp;#47;sysutils&amp;#47;squashfs-tools install clean
+# Building image
+$mdconfig -f kavrescue10.iso
+$mountcd_9660 &amp;#47;dev&amp;#47;md0 &amp;#47;cdrom
+$cp -v &amp;#47;cdrom&amp;#47;boot&amp;#47;rescue .&amp;#47;
+$mkdir image &amp;#38;&amp;#38; cd image
+$zcat &amp;#47;cdrom&amp;#47;boot&amp;#47;rescue.igz |gcpio -id
+$patch -p0 &amp;#60; ..&amp;#47;patch-PXE_kav_rescue_2010.iso.patch
+$mkdir cdrom &amp;#38;&amp;#38; cp -R &amp;#47;cdrom&amp;#47;rescue cdrom&amp;#47;
+$mksquashfs cdrom cdrom.squashfs &amp;#38;&amp;#38; rm -fr cdrom
+$sudo cp &amp;#47;cdrom&amp;#47;image.squashfs .&amp;#47;
+$sudo chmod 644 image.squashfs
+$find . -print | gcpio -o -H newc &amp;#62; ..&amp;#47;rescue.igz &amp;#38;&amp;#38; cd ..&amp;#47; &amp;#38;&amp;#38; rm -fr image&amp;#47;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Example config pxe:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-ini&quot;&gt;label KAV10 rescue RUS
+kernel data&amp;#47;antivir&amp;#47;kav10&amp;#47;rescue
+append initrd=data&amp;#47;antivir&amp;#47;kav10&amp;#47;rescue.igz root=&amp;#47;dev&amp;#47;ram0 cdroot=1 kavlang=ru loop=image.squashfs looptype=squashfs realroot=&amp;#47;
+
+label KAV10 rescue ENG
+kernel data&amp;#47;antivir&amp;#47;kav10&amp;#47;rescue
+append initrd=data&amp;#47;antivir&amp;#47;kav10&amp;#47;rescue.igz root=&amp;#47;dav&amp;#47;ram0 cdroot=1 kavlang=en loop=image.squashfs looptype=squashfs realroot=&amp;#47;
+
+label KAV10 rescue text mode
+kernel data&amp;#47;antivir&amp;#47;kav10&amp;#47;rescue
+append initrd=data&amp;#47;antivir&amp;#47;kav10&amp;#47;rescue.igz root=&amp;#47;dev&amp;#47;ram0 cdroot=1 kavlang=en loop=image.squashfs looptype=squashfs real_root=&amp;#47; nox kavshell
+
+&lt;/code&gt;&lt;/pre&gt;
+&lt;section class=&quot;downloads&quot;&gt;&lt;h2&gt;Downloadable bits&lt;/h2&gt;&lt;ul&gt;&lt;li&gt;&lt;a href=&quot;/assets/posts/kaspersky/patch-PXE-kav_rescue_10.iso.patch&quot;&gt;Download patch-PXE-kav_rescue_10.iso.patch&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/assets/posts/kaspersky/patch-PXE_kav_rescue_2010.iso.patch&quot;&gt;Download patch-PXE_kav_rescue_2010.iso.patch&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/assets/posts/kaspersky/pxeboot_kav_rescue_10.cfg&quot;&gt;Download pxeboot_kav_rescue_10.cfg&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&quot;/assets/posts/kaspersky/pxeboot_kavrescue10.cfg&quot;&gt;Download pxeboot_kavrescue10.cfg&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/section&gt;</content>
+  </entry>  <entry>
+    <title>Kaspersky update server</title>
+    <link href="http://zlonet.ru/page/kaspersky-update-server/"/>
+    <id>http://zlonet.ru/page/kaspersky-update-server</id>
+    <updated>2010-05-27T00:00:00Z</updated>
+    <summary type="html">  &lt;p&gt;Устанавливаем порт retranslator:&lt;/p&gt;</summary>
+    <content type="html">
+  &lt;main class=&quot;container&quot;&gt;
+    &lt;article class=&quot;post&quot;&gt;
+  &lt;header&gt;
+    &lt;h2&gt;Kaspersky update server&lt;/h2&gt;
+    &lt;ul class=&quot;post-info&quot;&gt;
+      &lt;li&gt;Date: 27 May 2010&lt;/li&gt;
+      
+      &lt;li&gt;Tagged with: &lt;a href=&quot;/tags/kaspersky/&quot;&gt;Kaspersky&lt;/a&gt;, &lt;a href=&quot;/tags/update/&quot;&gt;update&lt;/a&gt;, &lt;a href=&quot;/tags/retranslator/&quot;&gt;retranslator&lt;/a&gt;, &lt;a href=&quot;/tags/freebsd/&quot;&gt;FreeBSD&lt;/a&gt;, &lt;a href=&quot;/tags/ports/&quot;&gt;ports&lt;/a&gt;, &lt;a href=&quot;/tags/nginx/&quot;&gt;Nginx&lt;/a&gt;&lt;/li&gt;
+    &lt;/ul&gt;
+  &lt;/header&gt;
+  &lt;p&gt;Устанавливаем порт retranslator:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;$sudo make -C &amp;#47;usr&amp;#47;ports&amp;#47;security&amp;#47;retranslator install clean (Пока только PR 147116)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;В файле &lt;strong&gt;&amp;#47;usr&amp;#47;local&amp;#47;etc&amp;#47;retranslator.conf&lt;/strong&gt; указываем пути для хранения баз, и продукты для которых нужно получать обновления. Дополнительную информацию можно получить тут.&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-ini&quot;&gt;[path]
+RetranslationPath=&amp;#47;path&amp;#47;to&amp;#47;kav.local&amp;#47;bases
+TempPath=&amp;#47;tmp
+
+[locale]
+DateFormat=%d-%m-%Y
+TimeFormat=%H:%M:%S
+
+[updater.path]
+BackUpPath=&amp;#47;path&amp;#47;to&amp;#47;kav.local&amp;#47;backup
+PidFile=&amp;#47;var&amp;#47;run&amp;#47;kav-retranslator.pid
+
+[updater.options]
+RetranslateComponentsList=KDB, KDBI386, CORE, ARK, BSS, ADBU, ADB, AH, AH2I386, AH2X64, APU, AP, AS, BB, BB2, BLST, BLST2, KAV9EXEC, KAV8EXEC, INFO, RT, WMUF, WA, WAVI386, VLNS, EMU, PAS4, PAS, PARCTL, SSA, ASTRM, HIPS, HIPS2, KSN, QSCAN, UPDATER
+
+Index=u0607g.xml
+IndexRelativeServerPath=index
+UseUpdateServerUrl=no
+UseUpdateServerUrlOnly=no
+UpdateServerUrl=
+RegionSettings=ru
+ConnectTimeout=20
+KeepSilent=no
+UseProxy=no
+ProxyAddress=
+PassiveFtp=no
+PostRetranslateCmd=
+
+[updater.report]
+Append=no
+ReportFileName=&amp;#47;var&amp;#47;log&amp;#47;retranslator.log
+ReportLevel=0
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Добавляем строку с заданием в cron для обновления каждые полчаса:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-bash&quot;&gt;1,31 * * * * root &amp;#47;usr&amp;#47;local&amp;#47;bin&amp;#47;retranslator -q -c &amp;#47;usr&amp;#47;local&amp;#47;etc&amp;#47;retranslator.conf
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Часть конфига для nginx:&lt;/p&gt;
+&lt;pre&gt;&lt;code class=&quot;language-nginx&quot;&gt;server {
+    listen 80;
+    servername kav.local;
+
+    accesslog &amp;#47;var&amp;#47;log&amp;#47;webserver&amp;#47;kav.local_access.log;
+
+    location &amp;#47; {
+        root &amp;#47;path&amp;#47;to&amp;#47;www&amp;#47;kav.local&amp;#47;bases;
+        autoindex on;
+    }
+}
+&lt;/code&gt;&lt;/pre&gt;</content>
+  </entry></feed>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Installing a FusionInventory to FreeBSD * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Installing a FusionInventory to FreeBSD</h2>
+    <ul class="post-info">
+      <li>Date: 18 Feb 2011</li>
+      
+      <li>Tagged with: <a href="/tags/fusioninventory/">FusionInventory</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/nginx/">Nginx</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/php/">PHP</a></li>
+    </ul>
+  </header>
+  <p>Hi everybody!
+This is simple how to install fusioninventory to <a href="http://www.freebsd.org/">FreeBSD</a>. I missed steps with install a DB.</p>
+<p>I have:</p>
+<pre><code class="language-bash">% uname -sr
+FreeBSD 8.1-RELEASE
+</code></pre>
+<p>I like ports tree :) We will install glpi and plugin from a ports tree </p>
+<pre><code class="language-bash">$portmaster www&#47;nginx www&#47;glpi
+$echo nginx_enable=\"YES\"&#62;&#62;&#47;etc&#47;rc.conf
+$echo php_fpm_enable=\"YES\"&#62;&#62;&#47;etc&#47;rc.conf
+</code></pre>
+<p>You are can get a <a href="http://www.freebsd.org/cgi/query-pr.cgi?pr=ports/154867">port</a></p>
+<p>And then try a few steps :-P</p>
+<pre><code class="language-bash">$sh shar-1.sh
+$make -C glpi-plugins-fusioninventory-server&#47; install clean
+</code></pre>
+<p>This is my configuration file for a <a href="http://www.nginx.org/">nginx</a> virtual host with glpi</p>
+<pre><code class="language-nginx">server {
+    listen       80;
+    server_name  glpi;
+    #    charset utf-8;
+    #access_log  logs&#47;host.access.log  main;
+    access_log &#47;var&#47;log&#47;nginx.glpi.log;
+    error_log &#47;var&#47;log&#47;nginx.error.glpi.log;
+    location &#47; {
+        root   &#47;usr&#47;local&#47;www&#47;glpi;
+        index  index.php index.html index.htm;
+    }
+    #error_page  404              &#47;404.html;
+    # redirect server error pages to the static page &#47;50x.html
+    #
+    error_page   500 502 503 504  &#47;50x.html;
+    location = &#47;50x.html {
+        root   &#47;usr&#47;local&#47;www&#47;nginx-dist;
+    }
+    location ~* \.php$ {
+        fastcgi_pass 127.0.0.1:9000;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME &#47;usr&#47;local&#47;www&#47;glpi$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+</code></pre>
+<p>Now need create a log files and then start services&#8230;.</p>
+<pre><code class="language-bash">$touch &#47;var&#47;log&#47;nginx.glpi.log
+$touch &#47;var&#47;log&#47;nginx.error.glpi.log
+$&#47;usr&#47;local&#47;etc&#47;rc.d&#47;php-fpm start
+$&#47;usr&#47;local&#47;etc&#47;rc.d&#47;nginx start
+</code></pre>
+<p>Done. go to your glpi and activate plugin.</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

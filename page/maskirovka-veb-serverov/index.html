@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Маскировка веб серверов * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Маскировка веб серверов</h2>
+    <ul class="post-info">
+      <li>Date: 28 Sep 2009</li>
+      
+      <li>Tagged with: <a href="/tags/apache/">Apache</a>, <a href="/tags/nginx/">Nginx</a>, <a href="/tags/diff/">diff</a>, <a href="/tags/patch/">patch</a>, <a href="/tags/version/">version</a></li>
+    </ul>
+  </header>
+  <p><strong>Apache:</strong></p>
+<pre><code class="language-diff">--- include&#47;ap_release.h.orig   2009-09-28 01:42:28.000000000 +0800
++++ include&#47;ap_release.h        2009-09-28 01:49:33.000000000 +0800
+@@ -39,13 +39,13 @@
+  *
+  * Example: "Apache&#47;1.1.0 MrWidget&#47;0.1-alpha"
+  *
+-#define AP_SERVER_BASEVENDOR "Apache Software Foundation"
+-#define AP_SERVER_BASEPROJECT "Apache HTTP Server"
+-#define AP_SERVER_BASEPRODUCT "Apache"
+-
+-#define AP_SERVER_MAJORVERSION_NUMBER 2
+-#define AP_SERVER_MINORVERSION_NUMBER 2
+-#define AP_SERVER_PATCHLEVEL_NUMBER   13
++#define AP_SERVER_BASEVENDOR "Satan Software"
++#define AP_SERVER_BASEPROJECT "HELL-WEB"
++#define AP_SERVER_BASEPRODUCT "HELL-WEB"
++
++#define AP_SERVER_MAJORVERSION_NUMBER 6
++#define AP_SERVER_MINORVERSION_NUMBER 66
++#define AP_SERVER_PATCHLEVEL_NUMBER   13
+#define AP_SERVER_DEVBUILD_BOOLEAN    0
+
+#if AP_SERVER_DEVBUILD_BOOLEAN
+</code></pre>
+<p>Парочка опции в <strong>httpd.conf</strong></p>
+<pre><code class="language-bash">ServerSignature Off
+ServerTokens Prod
+</code></pre>
+<p><strong>nginx:</strong></p>
+<pre><code class="language-diff">--- src&#47;core&#47;nginx.h.orig       2009-09-28 04:08:56.000000000 +0800
++++ src&#47;core&#47;nginx.h    2009-09-28 04:09:50.000000000 +0800
+@@ -8,9 +8,9 @@
+#define _NGINX_H_INCLUDED_
+
+
+-#define nginx_version         7062
+-#define NGINX_VERSION      "0.7.62"
+-#define NGINX_VER          "nginx&#47;" NGINX_VERSION
++#define nginx_version         6066
++#define NGINX_VERSION      "0.6.66"
++#define NGINX_VER          "hell web server&#47;" NGINX_VERSION
+
+#define NGINX_VAR          "NGINX"
+#define NGX_OLDPID_EXT     ".oldbin"
+
+--- src&#47;http&#47;modules&#47;perl&#47;nginx.pm.orig 2009-09-28 04:03:57.000000000 +0800
++++ src&#47;http&#47;modules&#47;perl&#47;nginx.pm      2009-09-28 04:06:02.000000000 +0800
+@@ -47,7 +47,7 @@ our @EXPORT = qw(&#60;br&#62;   HTTP_INSUFFICIENT_STORAGE&#60;br&#62; );
+
+-our $VERSION = &#39;0.7.62&#39;;
++our $VERSION = &#39;0.6.66&#39;;
+
+require XSLoader;
+XSLoader::load(&#39;nginx&#39;, $VERSION);
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

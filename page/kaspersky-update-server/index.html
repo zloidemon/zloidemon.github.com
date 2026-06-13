@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kaspersky update server * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Kaspersky update server</h2>
+    <ul class="post-info">
+      <li>Date: 27 May 2010</li>
+      
+      <li>Tagged with: <a href="/tags/kaspersky/">Kaspersky</a>, <a href="/tags/update/">update</a>, <a href="/tags/retranslator/">retranslator</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/nginx/">Nginx</a></li>
+    </ul>
+  </header>
+  <p>Устанавливаем порт retranslator:</p>
+<pre><code class="language-bash">$sudo make -C &#47;usr&#47;ports&#47;security&#47;retranslator install clean (Пока только PR 147116)
+</code></pre>
+<p>В файле <strong>&#47;usr&#47;local&#47;etc&#47;retranslator.conf</strong> указываем пути для хранения баз, и продукты для которых нужно получать обновления. Дополнительную информацию можно получить тут.</p>
+<pre><code class="language-ini">[path]
+RetranslationPath=&#47;path&#47;to&#47;kav.local&#47;bases
+TempPath=&#47;tmp
+
+[locale]
+DateFormat=%d-%m-%Y
+TimeFormat=%H:%M:%S
+
+[updater.path]
+BackUpPath=&#47;path&#47;to&#47;kav.local&#47;backup
+PidFile=&#47;var&#47;run&#47;kav-retranslator.pid
+
+[updater.options]
+RetranslateComponentsList=KDB, KDBI386, CORE, ARK, BSS, ADBU, ADB, AH, AH2I386, AH2X64, APU, AP, AS, BB, BB2, BLST, BLST2, KAV9EXEC, KAV8EXEC, INFO, RT, WMUF, WA, WAVI386, VLNS, EMU, PAS4, PAS, PARCTL, SSA, ASTRM, HIPS, HIPS2, KSN, QSCAN, UPDATER
+
+Index=u0607g.xml
+IndexRelativeServerPath=index
+UseUpdateServerUrl=no
+UseUpdateServerUrlOnly=no
+UpdateServerUrl=
+RegionSettings=ru
+ConnectTimeout=20
+KeepSilent=no
+UseProxy=no
+ProxyAddress=
+PassiveFtp=no
+PostRetranslateCmd=
+
+[updater.report]
+Append=no
+ReportFileName=&#47;var&#47;log&#47;retranslator.log
+ReportLevel=0
+</code></pre>
+<p>Добавляем строку с заданием в cron для обновления каждые полчаса:</p>
+<pre><code class="language-bash">1,31 * * * * root &#47;usr&#47;local&#47;bin&#47;retranslator -q -c &#47;usr&#47;local&#47;etc&#47;retranslator.conf
+</code></pre>
+<p>Часть конфига для nginx:</p>
+<pre><code class="language-nginx">server {
+    listen 80;
+    servername kav.local;
+
+    accesslog &#47;var&#47;log&#47;webserver&#47;kav.local_access.log;
+
+    location &#47; {
+        root &#47;path&#47;to&#47;www&#47;kav.local&#47;bases;
+        autoindex on;
+    }
+}
+</code></pre>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>

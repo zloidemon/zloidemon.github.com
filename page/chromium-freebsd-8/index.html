@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chromium в FreeBSD 8 * VG's blog</title>
+  <link rel="stylesheet" href="/assets/css/milligram.min.css">
+  <link rel="stylesheet" href="/assets/css/custom.css">
+</head>
+<body>
+  <header>
+    <nav class="navbar">
+      <section class="container">
+        <ul class="navbar-left">
+          <li><a href="/">Blog</a></li>
+          <li><a href="https://github.com/zloidemon/zloidemon.github.com">Sources</a></li>
+        </ul>
+        <ul class="navbar-right">
+          <li><a href="https://github.com/zloidemon">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/gvozdikov">LinkedIn</a></li>
+          <li><a href="/atom.xml">RSS</a></li>
+        </ul>
+      </section>
+    </nav>
+  </header>
+
+  <main class="container">
+    <article class="post">
+  <header>
+    <h2>Chromium в FreeBSD 8</h2>
+    <ul class="post-info">
+      <li>Date: 24 Dec 2009</li>
+      
+      <li>Tagged with: <a href="/tags/chromium/">Chromium</a>, <a href="/tags/freebsd/">FreeBSD</a>, <a href="/tags/ports/">ports</a>, <a href="/tags/patch/">patch</a>, <a href="/tags/diff/">diff</a>, <a href="/tags/git/">Git</a>, <a href="/tags/browser/">browser</a></li>
+    </ul>
+  </header>
+  <p><strong>English version</strong> <a href="http://wiki.freebsd.org/Chromium">chromium-english</a>
+<strong>Информация больше не актуальна, используйте английскую версию руководства для сборки. Мы ее регулярно дополняем и изменяем. Если есть вопросы меня можно найти в jabber.</strong></p>
+<p>Устанавливаем того, чего не хватает:</p>
+<pre><code class="language-bash">%sudo make -C &#47;usr&#47;ports&#47;security&#47;nss install clean
+%sudo make -C &#47;usr&#47;ports&#47;x11-toolkits&#47;gtk20 install clean
+%sudo make -C &#47;usr&#47;ports&#47;devel&#47;gconf2 install clean
+%sudo make -C &#47;usr&#47;ports&#47;devel&#47;libexecinfo install clean
+%sudo make -C &#47;usr&#47;ports&#47;devel&#47;git config install clean #собираем с поддержкой svn
+%sudo make -C &#47;usr&#47;ports&#47;devel&#47;subversion install clean
+%sudo make -C &#47;usr&#47;ports&#47;shells&#47;bash install clean[&#47;code]
+</code></pre>
+<p>Если у вас установлено <strong>devel&#47;icu</strong> его обязательно нужно деинсталлировать! Его можно будет поставить обратно. Иначе не чего не будет компилироваться.
+Перемещаем нужные файлы:</p>
+<pre><code class="language-bash">%cp &#47;usr&#47;local&#47;include&#47;execinfo.h &#47;usr&#47;include
+</code></pre>
+<p>Патчи положил в git репу <a href="http://gitorious.org/zloidemon-freebsd-ports/trunk/trees/master/patches/chromium">chromium-patches</a> тк автор удалил их с сайта&#8230; Так же он выкладывает регулярно последнии версии у себя на сайте <a href="http://chromium.jaggeri.com/">chromium-jaggeri</a>
+Изменяем патчь для работы с <a href="http://www.freebsd.org/">FreeBSD</a> 8:</p>
+<pre><code class="language-bash">%sed -e &#39;s,freebsd7,freebsd8,g&#39; 35057.patch &#62; 35057-freebsd8.patch
+</code></pre>
+<p>Получаем исходные коды:</p>
+<pre><code class="language-bash">%svn co http:&#47;&#47;gclient.googlecode.com&#47;svn&#47;trunk&#47; gclient
+%mkdir chrome;cd chrome
+%python ..&#47;gclient&#47;gclient&#47;gclient.py config http:&#47;&#47;src.chromium.org&#47;svn&#47;trunk&#47;src
+%python ..&#47;gclient&#47;gclient&#47;gclient.py sync --revision src@35057
+</code></pre>
+<p>Патчим исходные коды:</p>
+<pre><code class="language-bash">%cd src
+%git apply ..&#47;..&#47;35057-freebsd8.patch
+%patch -p0 &#60; ..&#47;..&#47;svndiffs-35057.patch
+</code></pre>
+<p>Компилируем:</p>
+<pre><code class="language-bash">%export GYP_GENERATORS make &#38;&#38; python build&#47;gyp_chromium -D&#39;OS=freebsd&#39; -D&#39;use_system_libxml=1&#39; build&#47;all.gyp --depth .&#47;
+%gmake BUILDTYPE=Release chrome
+</code></pre>
+<p>Очищаем от хлама:</p>
+<pre><code class="language-bash">%mkdir chrome-bin
+%cd out&#47;Release
+%find . \\( -name \\*.d -o -name obj\\* \\) -prune -o -print | cpio -dump ..&#47;..&#47;chrome-bin
+</code></pre>
+<p>Монтируем procfs:</p>
+<pre><code class="language-bash">%sudo mount -t procfs proc &#47;proc
+</code></pre>
+<p>Запускаем:</p>
+<pre><code class="language-bash">%cd ..&#47;..&#47;chrome-bin;.&#47;chrome
+</code></pre>
+<p><strong>PS:</strong> Не у всех работает ;). У меня к примеру получилось запустить после чистой сборки ports в jail окружении&#8230;</p>
+</article>
+  </main>
+
+  <footer>
+    <section class="container footer-nav">
+      <p></p>
+    </section>
+    <p class="container footer-credit">
+      copyright &copy; 2013 Veniamin Gvozdikov
+    </p>
+  </footer>
+</body>
+</html>
