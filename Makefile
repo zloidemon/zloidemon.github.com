@@ -1,6 +1,6 @@
 .include "config.mk"
 
-BUILD   := _build
+BUILD   := _tools
 LAYOUTS := _layouts
 POSTS   := _posts
 OUTPUT  := _site
