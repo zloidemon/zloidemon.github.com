@@ -13,13 +13,13 @@ help:
 	@echo "Usage: $(MAKE) <target>"
 	@echo ""
 	@echo "Targets:"
-	@echo "  all       Full build (posts, archives, tags, index, atom, cname, assets, 404)"
+	@echo "  all       Full build (posts, archives, tags, index, atom, cname, assets, 404, favicon)"
 	@echo "  serve     Build and serve at http://localhost:8000"
 	@echo "  deploy    Build and deploy to GitHub Pages"
 	@echo "  draft     Create a new post (usage: $(MAKE) draft TITLE=\"Post Title\")"
 	@echo "  clean     Remove _build/site/ and _build/data/"
 
-all: posts archives tags index atom cname assets assets-posts 404
+all: posts archives tags index atom cname assets assets-posts 404 favicon
 
 posts: ${BUILD}/posts.sh ${BUILD}/frontmatter.awk ${BUILD}/resolve-assets.awk ${LAYOUTS}/default.m4 ${LAYOUTS}/post.m4 ${POSTS}/*.md
 	sh ${BUILD}/posts.sh \
@@ -84,6 +84,9 @@ assets-posts:
 404:
 	cp 404.html ${OUTPUT}/
 
+favicon:
+	cp favicon.ico ${OUTPUT}/
+
 draft:
 	${BUILD}/draft.sh "${TITLE}" "${POSTS}" "${LAYOUTS}"
 
@@ -115,4 +118,4 @@ deploy: all
 	git remote add origin ${SITE_REPO} && \
 	git push origin master --force
 
-.PHONY: help all posts archives tags index atom cname assets assets-posts 404 clean serve test draft deploy
+.PHONY: help all posts archives tags index atom cname assets assets-posts 404 favicon clean serve test draft deploy
