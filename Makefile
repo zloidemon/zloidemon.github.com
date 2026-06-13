@@ -3,9 +3,10 @@
 BUILD   := _tools
 LAYOUTS := _layouts
 POSTS   := _posts
-OUTPUT  := _site
+OUTPUT  := _build/site
 
 ASSETS_DIR := assets/posts
+DATA    := _build/data
 
 help:
 	@echo "Usage: $(MAKE) <target>"
@@ -15,7 +16,7 @@ help:
 	@echo "  serve     Build and serve at http://localhost:8000"
 	@echo "  deploy    Build and deploy to GitHub Pages"
 	@echo "  draft     Create a new post (usage: $(MAKE) draft TITLE=\"Post Title\")"
-	@echo "  clean     Remove _site/ and _data/"
+	@echo "  clean     Remove _build/site/ and _build/data/"
 
 all: posts archives tags index atom cname assets assets-posts 404
 
@@ -26,35 +27,36 @@ posts: ${BUILD}/posts.sh ${BUILD}/frontmatter.awk ${BUILD}/resolve-assets.awk ${
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}" \
-	  ${ASSETS_DIR}
+	  ${ASSETS_DIR} \
+	  ${DATA}
 
-archives: ${BUILD}/archives.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 _data/posts.txt
+archives: ${BUILD}/archives.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.txt
 	sh ${BUILD}/archives.sh \
-	  _data \
+	  ${DATA} \
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}"
 
-tags: ${BUILD}/tags.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 _data/posts.txt
+tags: ${BUILD}/tags.sh ${LAYOUTS}/archive.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.txt
 	sh ${BUILD}/tags.sh \
-	  _data \
+	  ${DATA} \
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}"
 
-index: ${BUILD}/index.sh ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4 _data/posts.txt
+index: ${BUILD}/index.sh ${LAYOUTS}/post.m4 ${LAYOUTS}/default.m4 ${DATA}/posts.txt
 	sh ${BUILD}/index.sh \
-	  _data \
+	  ${DATA} \
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}"
 
-atom: ${BUILD}/atom.sh _data/posts.txt
+atom: ${BUILD}/atom.sh ${DATA}/posts.txt
 	sh ${BUILD}/atom.sh \
-	  _data \
+	  ${DATA} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}" \
@@ -78,17 +80,18 @@ assets-posts:
 draft:
 	${BUILD}/draft.sh "${TITLE}" "${POSTS}" "${LAYOUTS}"
 
-_data/posts.txt: ${BUILD}/posts.sh
+${DATA}/posts.txt: ${BUILD}/posts.sh
 	sh ${BUILD}/posts.sh \
 	  ${POSTS} \
 	  ${LAYOUTS} \
 	  ${OUTPUT} \
 	  ${SITE_URL} \
 	  "${SITE_TITLE}" \
-	  ${ASSETS_DIR}
+	  ${ASSETS_DIR} \
+	  ${DATA}
 
 clean:
-	rm -rf ${OUTPUT}/* _data
+	rm -rf ${OUTPUT} ${DATA}
 
 serve: all
 	@echo "Serving at http://localhost:8000"

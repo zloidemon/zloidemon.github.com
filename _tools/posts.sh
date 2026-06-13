@@ -6,9 +6,9 @@ output_dir="$3"
 site_url="$4"
 site_title="$5"
 assets_dir="$6"
+data_dir="$7"
 
 build_dir=$(dirname "$0")
-data_dir="${output_dir}/../_data"
 mkdir -p "$data_dir" "$output_dir"
 posts_file="${data_dir}/posts.txt"
 
